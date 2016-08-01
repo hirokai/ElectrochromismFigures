@@ -8,8 +8,9 @@ from figure_tools import figure
 from luigi_tools import cleanup
 
 
-@figure('3d')
+@figure('3e')
 def plot_cie_space():
+    plt.figure(figsize=(2,3))
     with open(ambiguous_path('../data/cielab_space/*.csv')) as f:
         reader = csv.reader(f)
         vss = []

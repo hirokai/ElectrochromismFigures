@@ -44,8 +44,9 @@ def plot_20perc(path):
     set_format(ax, [0, 30, 60], [45, 55, 65], 6, 5)
 
 
-@figure('3c')
+@figure('3d')
 def plot_rate_constants_voltage(path):
+    plt.figure(figsize=(3, 1.8))
     df = pd.read_csv(path)
 
     def get(df, v):
@@ -75,19 +76,20 @@ def plot_rate_constants_voltage(path):
     for i, pedot in enumerate(pedots):
         # if i == 2:
         #     continue
-        plt.scatter(pedot['voltage'], pedot['k'], c=colors10[i])
+        plt.scatter(pedot['voltage'], pedot['k'], c=colors10[i], s=25, lw=0)
         exp = get_exp_with_x0(vs[i])
         popt, pcov = curve_fit(exp, pedot['voltage'], pedot['k'], [0.2, 1])
         x = np.linspace(vs[i], 0.8, 100)
         y = exp(x, popt[0], popt[1])
-        plt.plot(x, y, c=colors10[i])
+        plt.plot(x, y, c=colors10[i], lw=1)
         count += 1
 
     plt.axis([0, 1, 0, 0.5])
 
 
-# @figure('S5')
+@figure('3e')
 def plot_rate_constants_pedot(path):
+    plt.figure(figsize=(3, 1.8))
     df = pd.read_csv(path)
 
     def get(df, v):
@@ -98,15 +100,33 @@ def plot_rate_constants_pedot(path):
     voltages = [0.2, 0.4, 0.6, 0.8]
     pedots = [get(df, v) for v in voltages]
 
-    plt.figure(figsize=(4, 6))
     count = 0
     for i, pedot in enumerate(pedots):
         # if i == 2:
         #     continue
-        plt.plot(pedot['PEDOT ratio'], pedot['k'], c=colors10[i], marker='o', mew=0)
+        plt.plot(pedot['PEDOT ratio'], pedot['k'], c=colors10[i], marker='o', mew=0, markersize=5, lw=1)
         count += 1
 
     plt.axis([0, 100, 0, 1])
+
+
+@figure('S3')
+def plot_rate_constants_voltage_red(path):
+    plt.figure(figsize=(4, 3))
+    df = pd.read_csv(path)
+
+    def get(df, v):
+        df2 = df[df['PEDOT ratio'] == v][df['skip'] != 1]
+        df2 = df2[df2['voltage'] <= 0][df2['mode'] == 'red']
+        return df2
+
+    ratios = [20, 40, 60, 80]
+    pedots = [get(df, v) for v in ratios]
+
+    for i, pedot in enumerate(pedots):
+        plt.scatter(pedot['voltage'], pedot['k'], c=colors10[i], s=50, lw=0)
+
+    plt.axis([-0.6, 0.2, 0, 0.5])
 
 
 class CollectAllKineticsStub(luigi.Task):
@@ -131,12 +151,15 @@ class PlotRateConstants(luigi.Task):
         return CollectAllKineticsStub()
 
     def output(self):
-        return [luigi.LocalTarget('../Fig 3c.pdf')]
+        return [luigi.LocalTarget('../Fig 3d.pdf'),
+                luigi.LocalTarget('../Fig 3e.pdf'),
+                luigi.LocalTarget('../Fig S3.pdf')]
 
     def run(self):
         path = self.input().path
         plot_rate_constants_voltage(path)
         plot_rate_constants_pedot(path)
+        plot_rate_constants_voltage_red(path)
 
 
 class TestPlottingKinetics(luigi.WrapperTask):
@@ -149,5 +172,6 @@ if __name__ == "__main__":
     import os
 
     os.chdir(os.path.dirname(__file__))
-    cleanup(TestPlottingKinetics())
+    cleanup(PlotOxTrace())
+    cleanup(PlotRateConstants())
     luigi.run(['TestPlottingKinetics'])
