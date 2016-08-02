@@ -65,7 +65,7 @@ def plot_correlation():
     plt.ylim([0, 60])
 
 
-@figure('2a')
+# @figure('2a')
 def plot_timecourse():
     # Data of one redox cycle with 20 sec interval on 5/23.
     time_course_str = """Number	Time [sec]	Abs at 570 nm	Mean L*

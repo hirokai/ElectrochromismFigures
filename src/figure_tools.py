@@ -10,7 +10,7 @@ def figure(name, show=False):
         def wrapper(*args, **kwargs):
             plt.clf()
             res = func(*args, **kwargs)
-            plt.savefig('../Fig ' + name + '.pdf')
+            plt.savefig('../dist/Fig ' + name + '.pdf')
             if show:
                 plt.show()
             return res
