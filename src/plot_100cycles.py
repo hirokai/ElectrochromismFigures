@@ -6,7 +6,7 @@ from data_tools import split_trace, save_csv, load_csv
 from scipy.optimize import curve_fit
 import luigi
 from image_tools import do_cie_analysis
-from figure_tools import figure
+from figure_tools import figure, set_common_format
 import seaborn as sns
 from luigi_tools import cleanup
 
@@ -45,10 +45,6 @@ def get_l_vs_t(path1, path2):
 
 @figure('3c', show=False)
 def plot_l_vs_t(l_vs_t):
-    sns.set_style('white')
-    sns.set_style("ticks")
-    sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
-
     ts1, ls1, ts2, ls2 = l_vs_t
     plt.subplot(1, 2, 1)
     plt.xlim([0, 20])
@@ -98,6 +94,7 @@ class Plot100Cycles(luigi.Task):
     def run(self):
         os.chdir(os.path.dirname(__file__))
         l_vs_t = get_l_vs_t(self.input()[0].path, self.input()[1].path)
+        set_common_format()
         plot_l_vs_t(l_vs_t)
         # plot_split_traces(l_vs_t)
 

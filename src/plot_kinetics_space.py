@@ -4,13 +4,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from data_tools import ambiguous_path, colors10
 from measure_cie_space import CollectCIESpace
-from figure_tools import figure
+from figure_tools import figure, set_common_format
 from luigi_tools import cleanup
 
 
 @figure('4e')
 def plot_cie_space():
-    plt.figure(figsize=(2,3))
+    plt.figure(figsize=(3,4.5))
     with open(ambiguous_path('../data/cielab_space/*.csv')) as f:
         reader = csv.reader(f)
         vss = []
@@ -38,6 +38,7 @@ class PlotCIESpace(luigi.Task):
         return [luigi.LocalTarget('../dist/Fig 4e.pdf')]
 
     def run(self):
+        set_common_format()
         plot_cie_space()
 
 

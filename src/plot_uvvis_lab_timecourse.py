@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from scipy import stats
 from luigi_tools import cleanup
 import re
-from figure_tools import set_format
+from figure_tools import set_format, set_common_format
 import os
 
 
@@ -106,14 +106,13 @@ class PlotUVVisTimeCIELab(luigi.Task):
                 luigi.LocalTarget('../dist/Fig 3b.pdf')]
 
     def run(self):
+        set_common_format()
         plot_uvvis()
         plot_timecourse()
         plot_correlation()
 
 
 if __name__ == "__main__":
-    import os
-
     os.chdir(os.path.dirname(__file__))
     cleanup(PlotUVVisTimeCIELab())
     luigi.run(['PlotUVVisTimeCIELab'])

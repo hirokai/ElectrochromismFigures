@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from data_tools import colors10, load_csv
 from scipy.optimize import curve_fit
-from figure_tools import figure, set_format
+from figure_tools import figure, set_format, set_common_format
 from data_tools import split_trace
 import seaborn as sns
 from pedot_voltage_conditions import CollectCIELabStub
@@ -22,7 +22,7 @@ def first_order(t, a_i, a_f, k, t0):
 
 @figure('4a')
 def plot_20perc(path):
-    fig, ax = plt.subplots(figsize=(4, 6))
+    fig, ax = plt.subplots(figsize=(3, 4.5))
 
     vs = np.array(map(lambda a: [float(a[0]), float(a[2])], load_csv(path)))
     tss, lss = split_trace(np.array(vs[:, 0]), np.array(vs[:, 1]), range(6, 1000, 60))
@@ -46,7 +46,7 @@ def plot_20perc(path):
 
 @figure('4c')
 def plot_rate_constants_voltage(path):
-    plt.figure(figsize=(3, 1.8))
+    plt.figure(figsize=(4.5, 3))
     df = pd.read_csv(path)
 
     def get(df, v):
@@ -89,7 +89,7 @@ def plot_rate_constants_voltage(path):
 
 @figure('4d')
 def plot_rate_constants_pedot(path):
-    plt.figure(figsize=(3, 1.8))
+    plt.figure(figsize=(4.5, 3))
     df = pd.read_csv(path)
 
     def get(df, v):
@@ -157,6 +157,7 @@ class PlotRateConstants(luigi.Task):
 
     def run(self):
         path = self.input().path
+        set_common_format()
         plot_rate_constants_voltage(path)
         plot_rate_constants_pedot(path)
         plot_rate_constants_voltage_red(path)

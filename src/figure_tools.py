@@ -35,3 +35,11 @@ def set_format(ax, xticks, yticks, x_minor, y_minor):
     ax.yaxis.set_minor_locator(AutoMinorLocator(y_minor))
     for item in ax.get_xticklabels() + ax.get_yticklabels():
         item.set_fontsize(15)
+
+
+def set_common_format():
+    import seaborn as sns
+
+    sns.set_style('white')
+    sns.set_style("ticks")
+    sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})

@@ -1,6 +1,6 @@
 import luigi
 from pedot_voltage_conditions import CurveFitStub
-from figure_tools import figure
+from figure_tools import figure, set_common_format
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -12,7 +12,7 @@ from luigi_tools import cleanup
 
 @figure('4b')
 def plot_final_colors(input_path):
-    fig, ax = plt.subplots(figsize=(2, 3))
+    fig, ax = plt.subplots(figsize=(3, 4.5))
     df = pd.read_csv(input_path)
 
     # pedot80 = df[df['PEDOT ratio'] == 80]
@@ -69,6 +69,7 @@ class PlotFinalColors(luigi.Task):
     def run(self):
         os.chdir(os.path.dirname(__file__))
         ys, es = plot_final_colors(self.input().path)
+        set_common_format()
         redox_potentials(ys, es)
 
 

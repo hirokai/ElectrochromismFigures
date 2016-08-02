@@ -1,5 +1,5 @@
 import luigi
-from figure_tools import figure
+from figure_tools import figure, set_common_format
 from luigi_tools import cleanup
 import matplotlib.pyplot as plt
 import numpy as np
@@ -40,12 +40,11 @@ class PlotCV(luigi.Task):
         return [luigi.LocalTarget('../dist/Fig 2a.pdf')]
 
     def run(self):
+        set_common_format()
         plot_cv()
 
 
 if __name__ == "__main__":
-    import os
-
     os.chdir(os.path.dirname(__file__))
     cleanup(PlotCV())
     luigi.run(['PlotCV'])
