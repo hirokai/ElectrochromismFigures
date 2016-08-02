@@ -3,6 +3,7 @@ from figure_tools import figure
 from luigi_tools import cleanup
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
 
 @figure('2a', show=False)
@@ -36,7 +37,7 @@ class PlotCV(luigi.Task):
         return []
 
     def output(self):
-        return [luigi.LocalTarget('../Fig 1c.pdf')]
+        return [luigi.LocalTarget('../dist/Fig 2a.pdf')]
 
     def run(self):
         plot_cv()

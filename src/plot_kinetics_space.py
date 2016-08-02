@@ -8,7 +8,7 @@ from figure_tools import figure
 from luigi_tools import cleanup
 
 
-@figure('3e')
+@figure('4e')
 def plot_cie_space():
     plt.figure(figsize=(2,3))
     with open(ambiguous_path('../data/cielab_space/*.csv')) as f:
@@ -35,7 +35,7 @@ class PlotCIESpace(luigi.Task):
         return [CollectCIESpace(movie_name='04 MVI_0785 10fps')]
 
     def output(self):
-        return [luigi.LocalTarget('../Fig 3d.pdf')]
+        return [luigi.LocalTarget('../dist/Fig 4e.pdf')]
 
     def run(self):
         plot_cie_space()

@@ -10,7 +10,7 @@ import os
 from luigi_tools import cleanup
 
 
-@figure('3b')
+@figure('4b')
 def plot_final_colors(input_path):
     fig, ax = plt.subplots(figsize=(2, 3))
     df = pd.read_csv(input_path)
@@ -49,7 +49,7 @@ def plot_final_colors(input_path):
     return ys, es
 
 
-@figure('S3')
+@figure('S4')
 def redox_potentials(ys, es):
     w = 15
     ratios = [20, 40, 60, 80]
@@ -64,7 +64,7 @@ class PlotFinalColors(luigi.Task):
         return CurveFitStub()
 
     def output(self):
-        return [luigi.LocalTarget('../Fig 3b.pdf'), luigi.LocalTarget('../Fig S3.pdf')]
+        return [luigi.LocalTarget('../dist/Fig 4b.pdf'), luigi.LocalTarget('../dist/Fig S4.pdf')]
 
     def run(self):
         os.chdir(os.path.dirname(__file__))

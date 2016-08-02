@@ -43,10 +43,11 @@ def get_l_vs_t(path1, path2):
     return [ts1, ls1, ts2, ls2]
 
 
-@figure('3e', show=False)
+@figure('3c', show=False)
 def plot_l_vs_t(l_vs_t):
     sns.set_style('white')
     sns.set_style("ticks")
+    sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
 
     ts1, ls1, ts2, ls2 = l_vs_t
     plt.subplot(1, 2, 1)
@@ -92,7 +93,7 @@ class Plot100Cycles(luigi.Task):
         return CollectCIELab100Cycles()
 
     def output(self):
-        return [luigi.LocalTarget('../Fig 3e.pdf')]
+        return [luigi.LocalTarget('../dist/Fig 3e.pdf')]
 
     def run(self):
         os.chdir(os.path.dirname(__file__))

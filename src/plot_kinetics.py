@@ -20,7 +20,7 @@ def first_order(t, a_i, a_f, k, t0):
     return y
 
 
-@figure('3a')
+@figure('4a')
 def plot_20perc(path):
     fig, ax = plt.subplots(figsize=(4, 6))
 
@@ -44,7 +44,7 @@ def plot_20perc(path):
     set_format(ax, [0, 30, 60], [45, 55, 65], 6, 5)
 
 
-@figure('3d')
+@figure('4c')
 def plot_rate_constants_voltage(path):
     plt.figure(figsize=(3, 1.8))
     df = pd.read_csv(path)
@@ -87,7 +87,7 @@ def plot_rate_constants_voltage(path):
     plt.axis([0, 1, 0, 0.5])
 
 
-@figure('3e')
+@figure('4d')
 def plot_rate_constants_pedot(path):
     plt.figure(figsize=(3, 1.8))
     df = pd.read_csv(path)
@@ -110,7 +110,7 @@ def plot_rate_constants_pedot(path):
     plt.axis([0, 100, 0, 1])
 
 
-@figure('S3')
+@figure('S5')
 def plot_rate_constants_voltage_red(path):
     plt.figure(figsize=(4, 3))
     df = pd.read_csv(path)
@@ -140,7 +140,7 @@ class PlotOxTrace(luigi.Task):
         return CollectCIELabStub()
 
     def output(self):
-        return [luigi.LocalTarget('../Fig 3a.pdf')]
+        return [luigi.LocalTarget('../dist/Fig 4a.pdf')]
 
     def run(self):
         plot_20perc(self.input()['15'].path)
@@ -151,9 +151,9 @@ class PlotRateConstants(luigi.Task):
         return CollectAllKineticsStub()
 
     def output(self):
-        return [luigi.LocalTarget('../Fig 3d.pdf'),
-                luigi.LocalTarget('../Fig 3e.pdf'),
-                luigi.LocalTarget('../Fig S3.pdf')]
+        return [luigi.LocalTarget('../dist/Fig 4c.pdf'),
+                luigi.LocalTarget('../dist/Fig 4d.pdf'),
+                luigi.LocalTarget('../dist/Fig S5.pdf')]
 
     def run(self):
         path = self.input().path
