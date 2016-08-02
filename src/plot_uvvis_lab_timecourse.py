@@ -13,7 +13,7 @@ import os
 @figure('2b')
 def plot_uvvis():
     vs = {}
-    fig, ax = plt.subplots(figsize=(4, 3))
+    fig, ax = plt.subplots(figsize=(4.5, 3))
     for mode in ['OX', 'RE']:
         vs[mode] = []
         for i in [1, 2, 3]:

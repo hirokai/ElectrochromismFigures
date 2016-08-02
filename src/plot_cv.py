@@ -8,6 +8,7 @@ import os
 
 @figure('2a', show=False)
 def plot_cv():
+    fig, ax = plt.subplots(figsize=(4.5, 3))
     path = os.path.join('../data/2000 rpm CV.txt')
     print(path)
     vs2 = []

@@ -6,13 +6,14 @@ from plot_final_colors import PlotFinalColors
 from plot_kinetics_space import PlotCIESpace
 from plot_uvvis_lab_timecourse import PlotUVVisTimeCIELab
 from plot_cv import PlotCV
+from plot_thickness import PlotThickness
 
 
 class AllFigures(luigi.WrapperTask):
     def requires(self):
         tasks = [PlotCV(), PlotUVVisTimeCIELab(),
                  PlotOxTrace(), PlotFinalColors(), PlotRateConstants(),
-                 PlotCIESpace(), Plot100Cycles()
+                 PlotCIESpace(), Plot100Cycles(), PlotThickness()
                  ]
         for t in tasks:
             yield t

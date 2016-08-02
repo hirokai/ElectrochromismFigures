@@ -40,6 +40,9 @@ def set_format(ax, xticks, yticks, x_minor, y_minor):
 def set_common_format():
     import seaborn as sns
 
+    ax = plt.axes()
+    for item in ax.get_xticklabels() + ax.get_yticklabels():
+        item.set_fontsize(15)
     sns.set_style('white')
     sns.set_style("ticks")
     sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
