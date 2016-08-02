@@ -1,5 +1,11 @@
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
+import os
+
+
+def ensure_exists(folder):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
 
 
 def figure(name, show=False):
@@ -10,6 +16,7 @@ def figure(name, show=False):
         def wrapper(*args, **kwargs):
             plt.clf()
             res = func(*args, **kwargs)
+            ensure_exists('../dist')
             plt.savefig('../dist/Fig ' + name + '.pdf')
             if show:
                 plt.show()
