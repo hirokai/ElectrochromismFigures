@@ -89,7 +89,7 @@ class Plot100Cycles(luigi.Task):
         return CollectCIELab100Cycles()
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig 3e.pdf')]
+        return [luigi.LocalTarget('../dist/Fig 3c.pdf')]
 
     def run(self):
         os.chdir(os.path.dirname(__file__))
