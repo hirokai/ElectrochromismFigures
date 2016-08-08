@@ -8,7 +8,7 @@ from figure_tools import figure, set_common_format
 from luigi_tools import cleanup
 
 
-@figure('4e')
+@figure('4d')
 def plot_cie_space():
     plt.figure(figsize=(3,4.5))
     with open(ambiguous_path('../data/cielab_space/*.csv')) as f:

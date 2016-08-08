@@ -45,7 +45,6 @@ def plot_20perc(path):
     set_format(ax, [0, 30, 60], [45, 55, 65], 6, 5)
 
 
-@figure('4c')
 def plot_rate_constants_voltage(path):
     plt.figure(figsize=(4.5, 3))
     df = pd.read_csv(path)
@@ -88,7 +87,7 @@ def plot_rate_constants_voltage(path):
     plt.axis([0, 1, 0, 0.5])
 
 
-@figure('4d')
+@figure('4c')
 def plot_rate_constants_pedot(path):
     plt.figure(figsize=(4.5, 3))
     df = pd.read_csv(path)
@@ -160,7 +159,6 @@ class PlotRateConstants(luigi.Task):
     def run(self):
         path = self.input().path
         set_common_format()
-        plot_rate_constants_voltage(path)
         plot_rate_constants_pedot(path)
         plot_rate_constants_voltage_red(path)
 
