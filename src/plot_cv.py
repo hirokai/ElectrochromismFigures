@@ -10,7 +10,6 @@ import os
 def plot_cv():
     fig, ax = plt.subplots(figsize=(4.5, 3))
     path = os.path.join('../data/2000 rpm CV.txt')
-    print(path)
     vs2 = []
     with open(path, 'rU') as f:
         s = ''
@@ -21,13 +20,12 @@ def plot_cv():
             ws = line.split('\t')
             if len(ws) >= 2:
                 vs2.append(map(float, ws))
-    print(vs2)
     arr = np.array(vs2)
     arr[:, 1] = arr[:, 1] * 1e6
     idxs = np.argwhere(arr[:, 0] == 0)
     idx1 = idxs[-3][0]
     idx2 = idxs[-1][0]
-    plt.plot(arr[idx1:idx2, 0], arr[idx1:idx2, 1], c='b')
+    plt.plot(arr[idx1:idx2, 0], arr[idx1:idx2, 1], c='b', lw=1)
     plt.xlim([-0.8, 1])
 
     plt.ylim([-200, 200])

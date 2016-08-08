@@ -33,7 +33,7 @@ def plot_final_colors(input_path):
     popts = []
     perrs = []
     for i, pedot in enumerate(pedots):
-        plt.scatter(pedot['voltage'], pedot['L_f'], c=colors10[i])
+        plt.scatter(pedot['voltage'], pedot['L_f'], c=colors10[i],lw=0, s=25)
         popt, pcov = curve_fit(sigmoid, pedot['voltage'], pedot['L_f'], [0, 0.2, min(pedot['L_f']), max(pedot['L_f'])])
         x = np.linspace(-1, 1, 100)
         perr = np.sqrt(np.diag(pcov))
@@ -41,7 +41,7 @@ def plot_final_colors(input_path):
         popts.append(popt)
         perrs.append(perr)
         y = sigmoid(x, *popt)
-        plt.plot(x, y, c=colors10[i])
+        plt.plot(x, y, c=colors10[i],lw=1)
         plt.xlim([-0.6, 1])
         # plt.ylim([10, 40])
     ys = [p[0] for p in popts]
@@ -51,10 +51,13 @@ def plot_final_colors(input_path):
 
 @figure('S4')
 def redox_potentials(ys, es):
+    fig, ax = plt.subplots(figsize=(4.5, 3))
     w = 15
     ratios = [20, 40, 60, 80]
-    plt.bar(map(lambda a: a - w / 2, ratios), ys, width=w, color='#ccccff')
-    plt.errorbar(ratios, ys, es, fmt='none')
+    plt.bar(map(lambda a: a - w / 2, ratios), ys, width=w, color=colors10[0:4])
+    (_, caps, _) = plt.errorbar(ratios, ys, es, fmt='none', lw=1, elinewidth=1)
+    for cap in caps:
+        cap.set_markeredgewidth(1)
     plt.xlim([0, 100])
     plt.ylim([0, 0.2])
 

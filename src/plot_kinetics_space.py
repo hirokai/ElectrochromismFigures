@@ -10,7 +10,7 @@ from luigi_tools import cleanup
 
 @figure('4d')
 def plot_cie_space():
-    plt.figure(figsize=(3,4.5))
+    plt.figure(figsize=(4.5,3))
     with open(ambiguous_path('../data/cielab_space/*.csv')) as f:
         reader = csv.reader(f)
         vss = []
@@ -24,9 +24,9 @@ def plot_cie_space():
     vss[:, 2] = (vss[:, 2] - 18.5) / (38 - 18.5)
     vss[:, 3] = (vss[:, 3] - 26) / (41.5 - 26)
 
-    plt.plot(vss[:, 0], vss[:, 1], c=colors10[0])
-    plt.plot(vss[:, 0], vss[:, 2], c=colors10[1])
-    plt.plot(vss[:, 0], vss[:, 3], c=colors10[2])
+    plt.plot(vss[:, 0], vss[:, 1], c=colors10[0], lw=1)
+    plt.plot(vss[:, 0], vss[:, 2], c=colors10[1], lw=1)
+    plt.plot(vss[:, 0], vss[:, 3], c=colors10[2], lw=1)
     plt.axis([0, 15, -0.1, 1.1])
 
 

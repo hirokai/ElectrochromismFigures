@@ -30,10 +30,10 @@ def plot_uvvis():
             vs[mode].append(np.array(vs2))
 
     vs3 = vs['OX'][0]
-    plt.plot(vs3[:, 0], vs3[:, 1], c='#888888', linestyle='--')
+    plt.plot(vs3[:, 0], vs3[:, 1], c='#888888', linestyle='--', lw=1)
 
     vs3 = vs['RE'][0]
-    plt.plot(vs3[:, 0], vs3[:, 1], c=colors10[0])
+    plt.plot(vs3[:, 0], vs3[:, 1], c=colors10[0], lw=1)
 
     plt.axis([350, 800, 0, 0.8])
     set_format(ax, [400, 500, 600, 700, 800], [0, 0.2, 0.4, 0.6, 0.8], 2, 2)
@@ -60,7 +60,7 @@ def plot_correlation():
     xs = np.linspace(0, 0.6, 10)
     ys = slope * xs + intercept
     print(slope, intercept)
-    plt.plot(xs, ys)
+    plt.plot(xs, ys, lw=1)
     plt.xlim([0, 0.6])
     plt.ylim([0, 60])
 
@@ -81,13 +81,13 @@ def plot_timecourse():
 
     fig, ax1 = plt.subplots(figsize=(3, 2))
     # ax1 = fig.axes()
-    ax1.plot(time_course[:, 1], time_course[:, 3], c='b', marker='o', ms=5, mew=0)
+    ax1.plot(time_course[:, 1], time_course[:, 3], c='b', marker='o', ms=5, mew=0, lw=1)
     plt.xlabel('Time')
     plt.ylabel('Mean L* value')
     plt.ylim([0, 60])
 
     ax2 = ax1.twinx()
-    ax2.plot(time_course[:, 1], time_course[:, 2], c='r', marker='o', ms=5, mew=0)
+    ax2.plot(time_course[:, 1], time_course[:, 2], c='r', marker='o', ms=5, mew=0, lw=1)
     plt.ylabel('Absorbance at 570 nm')
     plt.ylim([0, 0.6])
 

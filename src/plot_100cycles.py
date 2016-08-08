@@ -2,7 +2,7 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from data_tools import split_trace, save_csv, load_csv
+from data_tools import split_trace, save_csv, load_csv, colors10
 from scipy.optimize import curve_fit
 import luigi
 from image_tools import do_cie_analysis
@@ -49,12 +49,12 @@ def plot_l_vs_t(l_vs_t):
     plt.subplot(1, 2, 1)
     plt.xlim([0, 20])
     plt.ylim([0, 15])
-    plt.plot(ts1, ls1)
+    plt.plot(ts1, ls1, c=colors10[0], lw=1)
 
     plt.subplot(1, 2, 2)
     plt.xlim([0, 20])
     plt.ylim([0, 15])
-    plt.plot(ts2, ls2)
+    plt.plot(ts2, ls2, c=colors10[0], lw=1)
 
 
 # @figure('3f', show=True)

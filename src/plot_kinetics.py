@@ -124,7 +124,7 @@ def plot_rate_constants_voltage_red(path):
     pedots = [get(df, v) for v in ratios]
 
     for i, pedot in enumerate(pedots):
-        plt.scatter(pedot['voltage'], pedot['k'], c=colors10[i], s=50, lw=0)
+        plt.plot(pedot['voltage'], pedot['k'], c=colors10[i], marker='o', mew=0, markersize=5, lw=1)
 
     plt.axis([-0.6, 0.2, 0, 0.5])
 
