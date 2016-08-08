@@ -57,7 +57,7 @@ def plot_l_vs_t(l_vs_t):
         plt.plot(ts2, ls2, c='b', lw=1)
     return func
 
-# @figure('3f', show=True)
+
 def plot_split_traces(l_vs_t):
     ts1, ls1, ts2, ls2 = l_vs_t
     tss, lss = split_trace(ts1, ls1, range(0, 20, 1))
@@ -93,7 +93,6 @@ class Plot100Cycles(luigi.Task):
         return [luigi.LocalTarget('../dist/Fig '+self.name+'.pdf')]
 
     def run(self):
-        os.chdir(os.path.dirname(__file__))
         l_vs_t = get_l_vs_t(self.input()[0].path, self.input()[1].path)
         set_common_format()
         plot_and_save(plot_l_vs_t(l_vs_t),self.name)
@@ -103,5 +102,6 @@ class Plot100Cycles(luigi.Task):
 if __name__ == "__main__":
     import os
 
+    os.chdir(os.path.dirname(__file__))
     cleanup(Plot100Cycles(name='3c'))
-    luigi.run(['Plot100Cycles','name','3c'])
+    luigi.run(['Plot100Cycles','--name','3c'])

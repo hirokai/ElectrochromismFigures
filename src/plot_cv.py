@@ -47,5 +47,5 @@ class PlotCV(luigi.Task):
 
 if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
-    cleanup(PlotCV())
-    luigi.run(['PlotCV'])
+    cleanup(PlotCV(name='2a'))
+    luigi.run(['PlotCV','--name','2a'])

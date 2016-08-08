@@ -161,4 +161,4 @@ class PlotOxCurrent(luigi.Task):
 if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
     cleanup(PlotOxCurrent(name='S3'))
-    luigi.run(['PlotOxCurrent','name','S3'])
+    luigi.run(['PlotOxCurrent','--name','S3'])

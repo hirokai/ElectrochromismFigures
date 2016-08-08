@@ -48,4 +48,4 @@ if __name__ == "__main__":
 
     os.chdir(os.path.dirname(__file__))
     cleanup(PlotCIESpace(name='4d'))
-    luigi.run(['PlotCIESpace','name','4d'])
+    luigi.run(['PlotCIESpace','--name','4d'])

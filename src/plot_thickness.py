@@ -68,4 +68,4 @@ if __name__ == "__main__":
 
     os.chdir(os.path.dirname(__file__))
     cleanup(PlotThickness(name1='S1', name2='S2'))
-    luigi.run(['PlotThickness', 'name1', 'S1', 'name2', 'S2'])
+    luigi.run(['PlotThickness', '--name1', 'S1', '--name2', 'S2'])

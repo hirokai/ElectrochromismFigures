@@ -76,7 +76,6 @@ class PlotFinalColors(luigi.Task):
                 luigi.LocalTarget('../dist/Fig ' + self.name2 + '.pdf')]
 
     def run(self):
-        os.chdir(os.path.dirname(__file__))
         set_common_format()
         ys, es = plot_and_save(plot_final_colors(self.input().path),self.name1)
         plot_and_save(redox_potentials(ys, es),self.name2)
@@ -90,4 +89,4 @@ class FinalColorsTest(luigi.WrapperTask):
 if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
     cleanup(PlotFinalColors(name1='4b', name2='S4'))
-    luigi.run(['FinalColorsTest','name1','4b','name1','S4'])
+    luigi.run(['FinalColorsTest'])

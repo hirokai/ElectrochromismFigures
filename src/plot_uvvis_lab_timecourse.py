@@ -117,4 +117,4 @@ class PlotUVVisTimeCIELab(luigi.Task):
 if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
     cleanup(PlotUVVisTimeCIELab(name1='2b', name2='3a', name3='3b'))
-    luigi.run(['PlotUVVisTimeCIELab', 'name1', '2b', 'name2', '3a', 'name3', '3b'])
+    luigi.run(['PlotUVVisTimeCIELab', '--name1', '2b', '--name2', '3a', '--name3', '3b'])
