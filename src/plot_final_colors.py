@@ -12,7 +12,7 @@ from luigi_tools import cleanup
 
 @figure('4b')
 def plot_final_colors(input_path):
-    fig, ax = plt.subplots(figsize=(3, 4.5))
+    fig, ax = plt.subplots(figsize=(4.5, 3))
     df = pd.read_csv(input_path)
 
     # pedot80 = df[df['PEDOT ratio'] == 80]

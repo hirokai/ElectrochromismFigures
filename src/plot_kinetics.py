@@ -22,7 +22,7 @@ def first_order(t, a_i, a_f, k, t0):
 
 @figure('4a')
 def plot_20perc(path):
-    fig, ax = plt.subplots(figsize=(3, 4.5))
+    fig, ax = plt.subplots(figsize=(4.5, 3))
 
     vs = np.array(map(lambda a: [float(a[0]), float(a[2])], load_csv(path)))
     tss, lss = split_trace(np.array(vs[:, 0]), np.array(vs[:, 1]), range(6, 1000, 60))
@@ -33,14 +33,15 @@ def plot_20perc(path):
         ts, ls = vs
         if i in used_sections_idxs and len(ts) > 0:
             ts = ts - min(ts)
-            plt.scatter(ts, ls, c=colors10[count % 10], lw=0)
+            plt.scatter(ts, ls, c=colors10[count % 10], lw=0, s=12)
             fit_start = 2
             popt, _ = curve_fit(first_order, ts[fit_start:60], ls[fit_start:60])
             ts_fit = np.linspace(fit_start, 60, 100)
-            ls_fit = first_order(ts_fit, *popt)
-            plt.plot(ts_fit, ls_fit, c=colors10[count % 10])
+            ts_fit_plot = np.linspace(1, 60, 100)
+            ls_fit_plot = first_order(ts_fit_plot, *popt)
+            plt.plot(ts_fit_plot, ls_fit_plot, c=colors10[count % 10],lw=1)
             count += 1
-    plt.axis([-1, 61, 45, 65])
+    plt.axis([0, 60, 45, 65])
     set_format(ax, [0, 30, 60], [45, 55, 65], 6, 5)
 
 
@@ -143,6 +144,7 @@ class PlotOxTrace(luigi.Task):
         return [luigi.LocalTarget('../dist/Fig 4a.pdf')]
 
     def run(self):
+        set_common_format()
         plot_20perc(self.input()['15'].path)
 
 
