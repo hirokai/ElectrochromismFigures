@@ -35,7 +35,7 @@ class PlotCIESpace(luigi.Task):
         return [CollectCIESpace(movie_name='04 MVI_0785 10fps')]
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig 4e.pdf')]
+        return [luigi.LocalTarget('../dist/Fig 4d.pdf')]
 
     def run(self):
         set_common_format()

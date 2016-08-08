@@ -51,7 +51,7 @@ def plot_correlation():
     0.439	26.477"""
     calibration = np.array(map(lambda s: map(float, s.split('\t')), calibration_str.split('\n')[1:]))
 
-    plt.figure(figsize=(3, 2))
+    plt.figure(figsize=(4.5, 3))
     plt.scatter(calibration[:, 0], calibration[:, 1], lw=0, s=25)
     plt.xlabel('Absorbance at 570 nm')
     plt.ylabel('Mean L* value')
@@ -79,7 +79,7 @@ def plot_timecourse():
     8	120	0.444	17.943"""
     time_course = np.array(map(lambda s: map(float, s.split('\t')), time_course_str.split('\n')[1:]))
 
-    fig, ax1 = plt.subplots(figsize=(3, 2))
+    fig, ax1 = plt.subplots(figsize=(4.5, 3))
     # ax1 = fig.axes()
     ax1.plot(time_course[:, 1], time_course[:, 3], c='b', marker='o', ms=5, mew=0, lw=1)
     plt.xlabel('Time')
@@ -102,7 +102,8 @@ class PlotUVVisTimeCIELab(luigi.Task):
         return []
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig 2b.pdf'), luigi.LocalTarget('../dist/Fig 3a.pdf'),
+        return [luigi.LocalTarget('../dist/Fig 2b.pdf'),
+                luigi.LocalTarget('../dist/Fig 3a.pdf'),
                 luigi.LocalTarget('../dist/Fig 3b.pdf')]
 
     def run(self):

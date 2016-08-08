@@ -14,8 +14,8 @@ class AllFigures(luigi.WrapperTask):
     def requires(self):
         tasks = [PlotCV(), PlotUVVisTimeCIELab(),
                  PlotOxTrace(), PlotFinalColors(), PlotRateConstants(),
-                 PlotCIESpace(), Plot100Cycles(), PlotThickness(),
-                 PlotOxCurrent()
+                 PlotCIESpace(), Plot100Cycles(), PlotThickness()
+                 , PlotOxCurrent()
                  ]
         for t in tasks:
             yield t

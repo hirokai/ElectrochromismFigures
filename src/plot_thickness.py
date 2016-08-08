@@ -15,7 +15,7 @@ def plot_thickness_pedot():
 
     dat = np.array(map(lambda l: map(float, l.split('\t')), str.split('\n')))
 
-    plt.figure(figsize=(4, 3))
+    plt.figure(figsize=(4.5, 3))
     (_, caps, _) = plt.errorbar(dat[:, 0], dat[:, 1]/1000, dat[:, 2]/1000, lw=1,elinewidth=1)
     for cap in caps:
         cap.set_markeredgewidth(1)
@@ -38,7 +38,7 @@ def plot_thickness_rpm():
     dat = np.array(map(lambda l: map(float, l.split('\t')), str.split('\n')))
 
     w = 8
-    plt.figure(figsize=(4, 3))
+    plt.figure(figsize=(4.5, 3))
     (_,caps,_) = plt.errorbar(dat[:, 0], dat[:, 1]/1000, dat[:, 2]/1000, lw=1,elinewidth=1)
     for cap in caps:
         cap.set_markeredgewidth(1)

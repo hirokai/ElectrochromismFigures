@@ -47,14 +47,14 @@ def get_l_vs_t(path1, path2):
 def plot_l_vs_t(l_vs_t):
     ts1, ls1, ts2, ls2 = l_vs_t
     plt.subplot(1, 2, 1)
-    plt.xlim([0, 20])
+    plt.xlim([0, 16])
     plt.ylim([0, 15])
-    plt.plot(ts1, ls1, c=colors10[0], lw=1)
+    plt.plot(ts1, ls1, c='b', lw=1)
 
     plt.subplot(1, 2, 2)
-    plt.xlim([0, 20])
+    plt.xlim([0, 16])
     plt.ylim([0, 15])
-    plt.plot(ts2, ls2, c=colors10[0], lw=1)
+    plt.plot(ts2, ls2, c='b', lw=1)
 
 
 # @figure('3f', show=True)

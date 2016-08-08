@@ -112,7 +112,7 @@ def plot_rate_constants_pedot(path):
 
 @figure('S5')
 def plot_rate_constants_voltage_red(path):
-    plt.figure(figsize=(4, 3))
+    plt.figure(figsize=(4.5, 3))
     df = pd.read_csv(path)
 
     def get(df, v):
@@ -152,8 +152,8 @@ class PlotRateConstants(luigi.Task):
         return CollectAllKineticsStub()
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig 4c.pdf'),
-                luigi.LocalTarget('../dist/Fig 4d.pdf'),
+        return [luigi.LocalTarget('../dist/Fig 4a.pdf'),
+                luigi.LocalTarget('../dist/Fig 4c.pdf'),
                 luigi.LocalTarget('../dist/Fig S5.pdf')]
 
     def run(self):
