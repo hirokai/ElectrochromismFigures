@@ -7,13 +7,15 @@ from plot_kinetics_space import PlotCIESpace
 from plot_uvvis_lab_timecourse import PlotUVVisTimeCIELab
 from plot_cv import PlotCV
 from plot_thickness import PlotThickness
+from measure_and_plot_ox_current import PlotOxCurrent
 
 
 class AllFigures(luigi.WrapperTask):
     def requires(self):
         tasks = [PlotCV(), PlotUVVisTimeCIELab(),
                  PlotOxTrace(), PlotFinalColors(), PlotRateConstants(),
-                 PlotCIESpace(), Plot100Cycles(), PlotThickness()
+                 PlotCIESpace(), Plot100Cycles(), PlotThickness(),
+                 PlotOxCurrent()
                  ]
         for t in tasks:
             yield t
