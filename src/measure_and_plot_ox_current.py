@@ -1,10 +1,7 @@
 import luigi
-from figure_tools import figure, set_common_format
+from figure_tools import plot_and_save, set_common_format
 from luigi_tools import cleanup
 from data_tools import colors10
-import matplotlib.pyplot as plt
-import numpy as np
-import os
 
 
 # Adopted from: /Users/hiroyuki/Google Drive/ExpData/Potentiostat/20160622 Suda EC/analysis
@@ -80,7 +77,6 @@ def calc_r2(xdata, ydata, f, popt):
     return r_squared
 
 
-@figure('S3', show=False)
 def plot_ox_current():
     fig, ax = plt.subplots(figsize=(4.5, 3))
     xss = []
@@ -149,18 +145,20 @@ def plot_ox_current():
 
 
 class PlotOxCurrent(luigi.Task):
+    name = luigi.Parameter()
+
     def requires(self):
         return []
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig S3.pdf')]
+        return [luigi.LocalTarget('../dist/Fig '+self.name+'.pdf')]
 
     def run(self):
         set_common_format()
-        plot_ox_current()
+        plot_and_save(plot_ox_current,self.name)
 
 
 if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
-    cleanup(PlotOxCurrent())
-    luigi.run(['PlotOxCurrent'])
+    cleanup(PlotOxCurrent(name='S3'))
+    luigi.run(['PlotOxCurrent','name','S3'])

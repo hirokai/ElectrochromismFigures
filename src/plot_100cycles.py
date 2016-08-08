@@ -6,7 +6,7 @@ from data_tools import split_trace, save_csv, load_csv, colors10
 from scipy.optimize import curve_fit
 import luigi
 from image_tools import do_cie_analysis
-from figure_tools import figure, set_common_format
+from figure_tools import plot_and_save, set_common_format
 import seaborn as sns
 from luigi_tools import cleanup
 
@@ -43,19 +43,19 @@ def get_l_vs_t(path1, path2):
     return [ts1, ls1, ts2, ls2]
 
 
-@figure('3c', show=False)
 def plot_l_vs_t(l_vs_t):
-    ts1, ls1, ts2, ls2 = l_vs_t
-    plt.subplot(1, 2, 1)
-    plt.xlim([0, 16])
-    plt.ylim([0, 15])
-    plt.plot(ts1, ls1, c='b', lw=1)
+    def func():
+        ts1, ls1, ts2, ls2 = l_vs_t
+        plt.subplot(1, 2, 1)
+        plt.xlim([0, 16])
+        plt.ylim([0, 15])
+        plt.plot(ts1, ls1, c='b', lw=1)
 
-    plt.subplot(1, 2, 2)
-    plt.xlim([0, 16])
-    plt.ylim([0, 15])
-    plt.plot(ts2, ls2, c='b', lw=1)
-
+        plt.subplot(1, 2, 2)
+        plt.xlim([0, 16])
+        plt.ylim([0, 15])
+        plt.plot(ts2, ls2, c='b', lw=1)
+    return func
 
 # @figure('3f', show=True)
 def plot_split_traces(l_vs_t):
@@ -83,24 +83,25 @@ class CollectCIELab100Cycles(luigi.Task):
 
 
 class Plot100Cycles(luigi.Task):
+    name = luigi.Parameter()
     resources = {"matplotlib": 1}
 
     def requires(self):
         return CollectCIELab100Cycles()
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig 3c.pdf')]
+        return [luigi.LocalTarget('../dist/Fig '+self.name+'.pdf')]
 
     def run(self):
         os.chdir(os.path.dirname(__file__))
         l_vs_t = get_l_vs_t(self.input()[0].path, self.input()[1].path)
         set_common_format()
-        plot_l_vs_t(l_vs_t)
+        plot_and_save(plot_l_vs_t(l_vs_t),self.name)
         # plot_split_traces(l_vs_t)
 
 
 if __name__ == "__main__":
     import os
 
-    cleanup(Plot100Cycles())
-    luigi.run(['Plot100Cycles'])
+    cleanup(Plot100Cycles(name='3c'))
+    luigi.run(['Plot100Cycles','name','3c'])

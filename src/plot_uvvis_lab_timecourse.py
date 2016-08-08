@@ -1,5 +1,5 @@
 import luigi
-from figure_tools import figure
+from figure_tools import plot_and_save
 from data_tools import colors10
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,7 +10,6 @@ from figure_tools import set_format, set_common_format
 import os
 
 
-@figure('2b')
 def plot_uvvis():
     vs = {}
     fig, ax = plt.subplots(figsize=(4.5, 3))
@@ -39,7 +38,6 @@ def plot_uvvis():
     set_format(ax, [400, 500, 600, 700, 800], [0, 0.2, 0.4, 0.6, 0.8], 2, 2)
 
 
-@figure('3b')
 def plot_correlation():
     # Data of redox cycles on 5/23.
     calibration_str = """Abs at 570 nm	Mean L*
@@ -65,7 +63,6 @@ def plot_correlation():
     plt.ylim([0, 60])
 
 
-@figure('3a')
 def plot_timecourse():
     # Data of one redox cycle with 20 sec interval on 5/23.
     time_course_str = """Number	Time [sec]	Abs at 570 nm	Mean L*
@@ -98,22 +95,26 @@ class TimeCourseUVStub(luigi.Task):
 
 
 class PlotUVVisTimeCIELab(luigi.Task):
+    name1 = luigi.Parameter()
+    name2 = luigi.Parameter()
+    name3 = luigi.Parameter()
+
     def requires(self):
         return []
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig 2b.pdf'),
-                luigi.LocalTarget('../dist/Fig 3a.pdf'),
-                luigi.LocalTarget('../dist/Fig 3b.pdf')]
+        return [luigi.LocalTarget('../dist/Fig ' + self.name1 + '.pdf'),
+                luigi.LocalTarget('../dist/Fig ' + self.name2 + '.pdf'),
+                luigi.LocalTarget('../dist/Fig ' + self.name3 + '.pdf')]
 
     def run(self):
         set_common_format()
-        plot_uvvis()
-        plot_timecourse()
-        plot_correlation()
+        plot_and_save(plot_uvvis, self.name1)
+        plot_and_save(plot_timecourse, self.name2)
+        plot_and_save(plot_correlation, self.name3)
 
 
 if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
-    cleanup(PlotUVVisTimeCIELab())
-    luigi.run(['PlotUVVisTimeCIELab'])
+    cleanup(PlotUVVisTimeCIELab(name1='2b', name2='3a', name3='3b'))
+    luigi.run(['PlotUVVisTimeCIELab', 'name1', '2b', 'name2', '3a', 'name3', '3b'])

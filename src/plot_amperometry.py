@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from data_tools import colors10, load_csv
 from scipy.optimize import curve_fit
-from figure_tools import figure, set_format, set_common_format
+from figure_tools import plot_and_save, set_format, set_common_format
 from data_tools import split_trace
 import seaborn as sns
 from pedot_voltage_conditions import CollectCIELabStub

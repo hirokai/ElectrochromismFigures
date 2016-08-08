@@ -4,11 +4,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from data_tools import ambiguous_path, colors10
 from measure_cie_space import CollectCIESpace
-from figure_tools import figure, set_common_format
+from figure_tools import plot_and_save, set_common_format
 from luigi_tools import cleanup
 
 
-@figure('4d')
 def plot_cie_space():
     plt.figure(figsize=(4.5,3))
     with open(ambiguous_path('../data/cielab_space/*.csv')) as f:
@@ -31,20 +30,22 @@ def plot_cie_space():
 
 
 class PlotCIESpace(luigi.Task):
+    name = luigi.Parameter()
+
     def requires(self):
         return [CollectCIESpace(movie_name='04 MVI_0785 10fps')]
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig 4d.pdf')]
+        return [luigi.LocalTarget('../dist/Fig '+self.name+'.pdf')]
 
     def run(self):
         set_common_format()
-        plot_cie_space()
+        plot_and_save(plot_cie_space,self.name)
 
 
 if __name__ == "__main__":
     import os
 
     os.chdir(os.path.dirname(__file__))
-    cleanup(PlotCIESpace())
-    luigi.run(['PlotCIESpace'])
+    cleanup(PlotCIESpace(name='4d'))
+    luigi.run(['PlotCIESpace','name','4d'])
