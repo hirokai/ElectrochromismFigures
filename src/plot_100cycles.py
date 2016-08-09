@@ -17,15 +17,16 @@ def first_order(t, a_i, a_f, k, t0):
 
 
 def collect_all_cielab():
+    root_folder = os.path.join(os.path.expanduser('~'), 'Google Drive/ExpDataLarge/Suda EC 100 cycles slices')
     roi = [906, 291, 40, 40]
-    folder = '/Users/hiroyuki/Downloads/100 cycles slices'
+    folder = os.path.join(root_folder, '100 cycles slices')
     labs = [do_cie_analysis(i, os.path.join(folder, name), roi) for i, name in enumerate(os.listdir(folder))]
-    save_csv('93-100cycles_new.csv', [['File number', 'L', 'a', 'b']] + labs)
+    save_csv('../data/93-100cycles_new.csv', [['File number', 'L', 'a', 'b']] + labs)
 
     roi = [906, 291, 40, 40]
-    folder = '/Users/hiroyuki/Downloads/1-10 cycles slices'
+    folder = os.path.join(root_folder, '1-10 cycles slices')
     labs = [do_cie_analysis(i, os.path.join(folder, name), roi) for i, name in enumerate(os.listdir(folder))]
-    save_csv('1-9cycles_new.csv', [['File number', 'L', 'a', 'b']] + labs)
+    save_csv('../data/1-9cycles_new.csv', [['File number', 'L', 'a', 'b']] + labs)
 
 
 def get_l_vs_t(path1, path2):
@@ -55,6 +56,7 @@ def plot_l_vs_t(l_vs_t):
         plt.xlim([0, 16])
         plt.ylim([0, 15])
         plt.plot(ts2, ls2, c='b', lw=1)
+
     return func
 
 
@@ -90,12 +92,12 @@ class Plot100Cycles(luigi.Task):
         return CollectCIELab100Cycles()
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig '+self.name+'.pdf')]
+        return [luigi.LocalTarget('../dist/Fig ' + self.name + '.pdf')]
 
     def run(self):
         l_vs_t = get_l_vs_t(self.input()[0].path, self.input()[1].path)
         set_common_format()
-        plot_and_save(plot_l_vs_t(l_vs_t),self.name)
+        plot_and_save(plot_l_vs_t(l_vs_t), self.name)
         # plot_split_traces(l_vs_t)
 
 
@@ -104,4 +106,4 @@ if __name__ == "__main__":
 
     os.chdir(os.path.dirname(__file__))
     cleanup(Plot100Cycles(name='3c'))
-    luigi.run(['Plot100Cycles','--name','3c'])
+    luigi.run(['Plot100Cycles', '--name', '3c'])
