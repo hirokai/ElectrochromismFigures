@@ -2,11 +2,11 @@ import luigi
 from figure_tools import set_common_format, plot_and_save
 from luigi_tools import cleanup
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import numpy as np
 import os
 
 
-# @figure('2a', show=False)
 def plot_cv():
     fig, ax = plt.subplots(figsize=(4.5, 3))
     path = os.path.join('../data/2000 rpm CV.txt')
@@ -27,8 +27,11 @@ def plot_cv():
     idx2 = idxs[-1][0]
     plt.plot(arr[idx1:idx2, 0], arr[idx1:idx2, 1], c='b', lw=1)
     plt.xlim([-0.8, 1])
-
     plt.ylim([-200, 200])
+    ax.xaxis.set_major_locator(MultipleLocator(0.4))
+    ax.xaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.yaxis.set_major_locator(MultipleLocator(100))
+    ax.yaxis.set_minor_locator(MultipleLocator(50))
 
 
 class PlotCV(luigi.Task):
@@ -47,5 +50,5 @@ class PlotCV(luigi.Task):
 
 if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
-    cleanup(PlotCV(name='2a'))
-    luigi.run(['PlotCV','--name','2a'])
+    cleanup(PlotCV(name='2b'))
+    luigi.run(['PlotCV','--name','2b'])

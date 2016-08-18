@@ -1,6 +1,7 @@
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import os
 from data_tools import split_trace, save_csv, load_csv, colors10
 from scipy.optimize import curve_fit
@@ -46,15 +47,38 @@ def get_l_vs_t(path1, path2):
 
 def plot_l_vs_t(l_vs_t):
     def func():
+        fig = plt.figure(figsize=(4.5, 3))
         ts1, ls1, ts2, ls2 = l_vs_t
-        plt.subplot(1, 2, 1)
+        ax = fig.add_subplot(121)
         plt.xlim([0, 16])
-        plt.ylim([0, 15])
+        plt.ylim([0, 16])
+
+        majorLocator = MultipleLocator(8)
+        minorLocator = MultipleLocator(2)
+        ax.xaxis.set_major_locator(majorLocator)
+        ax.xaxis.set_minor_locator(minorLocator)
+
+        majorLocator = MultipleLocator(4)
+        minorLocator = MultipleLocator(2)
+        ax.yaxis.set_major_locator(majorLocator)
+        ax.yaxis.set_minor_locator(minorLocator)
+
         plt.plot(ts1, ls1, c='b', lw=1)
 
-        plt.subplot(1, 2, 2)
+        ax = fig.add_subplot(122)
         plt.xlim([0, 16])
-        plt.ylim([0, 15])
+        plt.ylim([0, 16])
+
+        majorLocator = MultipleLocator(8)
+        minorLocator = MultipleLocator(2)
+        ax.xaxis.set_major_locator(majorLocator)
+        ax.xaxis.set_minor_locator(minorLocator)
+
+        majorLocator = MultipleLocator(4)
+        minorLocator = MultipleLocator(2)
+        ax.yaxis.set_major_locator(majorLocator)
+        ax.yaxis.set_minor_locator(minorLocator)
+
         plt.plot(ts2, ls2, c='b', lw=1)
 
     return func

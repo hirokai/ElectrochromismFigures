@@ -10,6 +10,7 @@ import csv
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator, FixedLocator
 import scipy
 from scipy.stats import linregress
 from scipy.signal import argrelextrema
@@ -80,7 +81,7 @@ def calc_r2(xdata, ydata, f, popt):
 def plot_ox_current_raw_overlay():
     using = ['500 rpm CV','750 rpm CV','0620/2000 rpm cv2']
     # using = [True,True,False,False,False,False,True]
-    fig, ax = plt.subplots(figsize=(1.5,1))
+    fig, ax = plt.subplots(figsize=(1.5,0.8))
     xss = []
     yss = []
     count = 0
@@ -101,8 +102,12 @@ def plot_ox_current_raw_overlay():
         xss.append(xs)
         yss.append(ys)
         if n in using:
-            plt.plot(xs[1900:2600],1e6*(ys[1900:2600]-ys[1900]),c=colors10[count], label=n)
+            plt.plot(xs[1900:2600],1e6*(ys[1900:2600]-ys[1900]),c=colors10[count], label=n, lw=1)
             count += 1
+    ax.xaxis.set_major_locator(FixedLocator([-0.2,0.4]))
+    ax.xaxis.set_minor_locator(MultipleLocator(0.2))
+    ax.yaxis.set_major_locator(MultipleLocator(20))
+    ax.yaxis.set_minor_locator(MultipleLocator(10))
     plt.ylim([0,40])
 
 
@@ -155,7 +160,7 @@ def plot_ox_current():
     currents = np.array(currents) * 1e6
     print(currents)
     thickness_plot = np.array(thickness_plot) * 0.001
-    plt.scatter(thickness_plot, currents, c=map(lambda a: colors10[0] if a else 'r', used),s=25,lw=0)
+    plt.scatter(thickness_plot, currents, facecolor=map(lambda a: colors10[0] if a else 'r', used),s=25,lw=0)
     used_y = currents[used]
     used_x = thickness_plot[used]
 
@@ -171,6 +176,10 @@ def plot_ox_current():
     plt.ylabel('Oxidative peak current [uA]')
     plt.xlim([0, 6])
     plt.ylim([0, 30])
+    ax.xaxis.set_major_locator(MultipleLocator(2))
+    ax.xaxis.set_minor_locator(MultipleLocator(1))
+    ax.yaxis.set_major_locator(MultipleLocator(10))
+    ax.yaxis.set_minor_locator(MultipleLocator(5))
 
 
 class PlotOxCurrent(luigi.Task):

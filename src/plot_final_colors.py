@@ -2,6 +2,7 @@ import luigi
 from pedot_voltage_conditions import CurveFitStub
 from figure_tools import plot_and_save, set_common_format
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import numpy as np
 import pandas as pd
 from data_tools import colors10
@@ -13,6 +14,10 @@ from luigi_tools import cleanup
 def plot_final_colors(input_path):
     def func():
         fig, ax = plt.subplots(figsize=(4.5, 3))
+        majorLocator = MultipleLocator(0.4)
+        minorLocator = MultipleLocator(0.1)
+        ax.xaxis.set_major_locator(majorLocator)
+        ax.xaxis.set_minor_locator(minorLocator)
         df = pd.read_csv(input_path)
 
         # pedot80 = df[df['PEDOT ratio'] == 80]
@@ -61,6 +66,8 @@ def redox_potentials(ys, es):
             cap.set_markeredgewidth(1)
         plt.xlim([0, 100])
         plt.ylim([0, 0.2])
+        ax.yaxis.set_major_locator(MultipleLocator(0.1))
+        ax.yaxis.set_minor_locator(MultipleLocator(0.02))
     return func
 
 

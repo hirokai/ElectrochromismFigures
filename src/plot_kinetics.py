@@ -1,5 +1,6 @@
 import luigi
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import csv
 import numpy as np
 import pandas as pd
@@ -115,7 +116,7 @@ def plot_rate_constants_pedot(path):
 
 def plot_rate_constants_voltage_red(path):
     def func():
-        plt.figure(figsize=(4.5, 3))
+        fig, ax = plt.subplots(figsize=(4.5, 3))
         df = pd.read_csv(path)
 
         def get(df, v):
@@ -129,7 +130,9 @@ def plot_rate_constants_voltage_red(path):
         for i, pedot in enumerate(pedots):
             plt.plot(pedot['voltage'], pedot['k'], c=colors10[i], marker='o', mew=0, markersize=5, lw=1)
 
-        plt.axis([-0.6, 0.2, 0, 0.5])
+        plt.axis([-0.6, 0.2, 0, 0.2])
+        ax.yaxis.set_major_locator(MultipleLocator(0.1))
+        ax.yaxis.set_minor_locator(MultipleLocator(0.02))
 
     return func
 

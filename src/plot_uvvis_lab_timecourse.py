@@ -3,6 +3,7 @@ from figure_tools import plot_and_save
 from data_tools import colors10
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 from scipy import stats
 from luigi_tools import cleanup
 import re
@@ -49,7 +50,8 @@ def plot_correlation():
     0.439	26.477"""
     calibration = np.array(map(lambda s: map(float, s.split('\t')), calibration_str.split('\n')[1:]))
 
-    plt.figure(figsize=(4.5, 3))
+    fig = plt.figure(figsize=(4.5, 3))
+    ax = fig.add_subplot(111)
     plt.scatter(calibration[:, 0], calibration[:, 1], lw=0, s=25)
     plt.xlabel('Absorbance at 570 nm')
     plt.ylabel('Mean L* value')
@@ -61,6 +63,14 @@ def plot_correlation():
     plt.plot(xs, ys, lw=1)
     plt.xlim([0, 0.6])
     plt.ylim([0, 60])
+    majorLocator = MultipleLocator(0.2)
+    minorLocator = MultipleLocator(0.1)
+    ax.xaxis.set_major_locator(majorLocator)
+    ax.xaxis.set_minor_locator(minorLocator)
+    majorLocator = MultipleLocator(20)
+    minorLocator = MultipleLocator(10)
+    ax.yaxis.set_major_locator(majorLocator)
+    ax.yaxis.set_minor_locator(minorLocator)
 
 
 def plot_timecourse():
@@ -82,11 +92,19 @@ def plot_timecourse():
     plt.xlabel('Time')
     plt.ylabel('Mean L* value')
     plt.ylim([0, 60])
+    majorLocator = MultipleLocator(20)
+    minorLocator = MultipleLocator(10)
+    ax1.yaxis.set_major_locator(majorLocator)
+    ax1.yaxis.set_minor_locator(minorLocator)
 
     ax2 = ax1.twinx()
     ax2.plot(time_course[:, 1], time_course[:, 2], c='r', marker='o', ms=5, mew=0, lw=1)
     plt.ylabel('Absorbance at 570 nm')
     plt.ylim([0, 0.6])
+    majorLocator = MultipleLocator(0.2)
+    minorLocator = MultipleLocator(0.1)
+    ax2.yaxis.set_major_locator(majorLocator)
+    ax2.yaxis.set_minor_locator(minorLocator)
 
 
 class TimeCourseUVStub(luigi.Task):
@@ -116,5 +134,5 @@ class PlotUVVisTimeCIELab(luigi.Task):
 
 if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
-    cleanup(PlotUVVisTimeCIELab(name1='2b', name2='3a', name3='3b'))
+    cleanup(PlotUVVisTimeCIELab(name1='2a', name2='3a', name3='3b'))
     luigi.run(['PlotUVVisTimeCIELab', '--name1', '2b', '--name2', '3a', '--name3', '3b'])
