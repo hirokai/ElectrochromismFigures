@@ -77,6 +77,35 @@ def calc_r2(xdata, ydata, f, popt):
     return r_squared
 
 
+def plot_ox_current_raw_overlay():
+    using = ['500 rpm CV','750 rpm CV','0620/2000 rpm cv2']
+    # using = [True,True,False,False,False,False,True]
+    fig, ax = plt.subplots(figsize=(1.5,1))
+    xss = []
+    yss = []
+    count = 0
+    for i,n in enumerate(files):
+        path = os.path.join('..', 'data', 'cv', n + '.txt')
+        with open(path) as f:
+            while True:
+                l = f.readline()
+                if l.find('Potential/V') == 0:
+                    break
+            f.readline()
+            reader = csv.reader(f, delimiter='\t')
+            vs = np.transpose(map(lambda row: map(float, row)[0:2], [r for r in reader]))
+        i_from, i_until = split_cv_cycle(vs[0])
+        vs_section = vs[:, i_from:i_until]
+        xs = vs_section[0]
+        ys = vs_section[1]
+        xss.append(xs)
+        yss.append(ys)
+        if n in using:
+            plt.plot(xs[1900:2600],1e6*(ys[1900:2600]-ys[1900]),c=colors10[count], label=n)
+            count += 1
+    plt.ylim([0,40])
+
+
 def plot_ox_current():
     fig, ax = plt.subplots(figsize=(4.5, 3))
     xss = []
@@ -145,20 +174,23 @@ def plot_ox_current():
 
 
 class PlotOxCurrent(luigi.Task):
-    name = luigi.Parameter()
+    name1 = luigi.Parameter()
+    name2 = luigi.Parameter()
 
     def requires(self):
         return []
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig '+self.name+'.pdf')]
+        return [luigi.LocalTarget('../dist/Fig '+self.name1+'.pdf'),
+                luigi.LocalTarget('../dist/Fig ' + self.name2 + '.pdf')]
 
     def run(self):
         set_common_format()
-        plot_and_save(plot_ox_current,self.name)
+        plot_and_save(plot_ox_current,self.name1)
+        plot_and_save(plot_ox_current_raw_overlay, self.name2)
 
 
 if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
-    cleanup(PlotOxCurrent(name='S3'))
-    luigi.run(['PlotOxCurrent','--name','S3'])
+    cleanup(PlotOxCurrent(name1='S3',name2='2b-inset'))
+    luigi.run(['PlotOxCurrent','--name1','S3','--name2','2b-inset'])
