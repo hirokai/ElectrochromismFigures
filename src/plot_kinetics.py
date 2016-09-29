@@ -68,10 +68,8 @@ def plot_rate_constants_voltage(path):
 
         return exp_func
 
-    s = """0.11500063
-    0.12029616
-    0.08706486
-    0.12566755"""
+    with open('../data/plot_rate_constants_voltage.txt', 'r') as content_file:
+        s = content_file.read()
 
     vs = map(float, s.split('\n'))
 

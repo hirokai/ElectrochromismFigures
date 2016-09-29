@@ -34,9 +34,10 @@ def run_set(slices_folder, rois):
 class CollectCIESpace(luigi.Task):
     movie_name = luigi.Parameter()
 
-    rois = map(lambda l: map(int, l.split('\t')), """408	253	20	20
-    380	222	20	20
-    342	180	20	20""".split('\n'))
+    with open('./data/CollectCIESpace_rois.txt', 'r') as content_file:
+        rois_str = content_file.read()
+
+    rois = map(lambda l: map(int, l.split('\t')), rois_str.split('\n'))
 
     base_folder = '/Users/hiroyuki/Downloads'
 

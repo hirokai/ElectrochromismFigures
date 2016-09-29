@@ -6,13 +6,10 @@ from luigi_tools import cleanup
 
 
 def plot_thickness_pedot():
-    str = """80	348.54	41.3672
-    60	795.32	20.09073
-    40	2604.8	41.33207
-    30	3121.2	39.43653
-    20	3740.4	107.4703"""
+    with open('../data/plot_thickness_pedot.txt', 'r') as content_file:
+        dat_str = content_file.read()
 
-    dat = np.array(map(lambda l: map(float, l.split('\t')), str.split('\n')))
+    dat = np.array(map(lambda l: map(float, l.split('\t')), dat_str.split('\n')))
 
     plt.figure(figsize=(4.5, 3))
     (_, caps, _) = plt.errorbar(dat[:, 0], dat[:, 1] / 1000, dat[:, 2] / 1000, lw=1, elinewidth=1)
@@ -25,15 +22,10 @@ def plot_thickness_pedot():
 
 
 def plot_thickness_rpm():
-    str = """500	5619	95.72617197
-750	4368	72.11033213
-1000	3832.2	39.49227773
-2000	2856.2	37.55848772
-3000	2627.2	64.63930693
-4000	1831.2	51.92147918
-5000	2199.4	57.51921418"""
+    with open('../data/plot_thickness_rpm.txt', 'r') as content_file:
+        dat_str = content_file.read()
 
-    dat = np.array(map(lambda l: map(float, l.split('\t')), str.split('\n')))
+    dat = np.array(map(lambda l: map(float, l.split('\t')), dat_str.split('\n')))
 
     w = 8
     plt.figure(figsize=(4.5, 3))

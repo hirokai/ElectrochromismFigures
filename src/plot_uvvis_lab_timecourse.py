@@ -41,13 +41,9 @@ def plot_uvvis():
 
 def plot_correlation():
     # Data of redox cycles on 5/23.
-    calibration_str = """Abs at 570 nm	Mean L*
-    0.249	44.011
-    0.472	23.788
-    0.278	46.198
-    0.403	30.196
-    0.253	48.461
-    0.439	26.477"""
+    with open('../data/plot_correlation.txt', 'r') as content_file:
+        calibration_str = content_file.read()
+
     calibration = np.array(map(lambda s: map(float, s.split('\t')), calibration_str.split('\n')[1:]))
 
     fig = plt.figure(figsize=(4.5, 3))
@@ -75,15 +71,9 @@ def plot_correlation():
 
 def plot_timecourse():
     # Data of one redox cycle with 20 sec interval on 5/23.
-    time_course_str = """Number	Time [sec]	Abs at 570 nm	Mean L*
-    1	0	0.514	17.956
-    2	20	0.287	42.205
-    3	40	0.272	42.202
-    4	60	0.26	45.653
-    5	60	0.257	45.668
-    6	80	0.415	24.934
-    7	100	0.415	18.689
-    8	120	0.444	17.943"""
+    with open('../data/plot_timecourse.txt', 'r') as content_file:
+        time_course_str = content_file.read()
+
     time_course = np.array(map(lambda s: map(float, s.split('\t')), time_course_str.split('\n')[1:]))
 
     fig, ax1 = plt.subplots(figsize=(4.5, 3))
