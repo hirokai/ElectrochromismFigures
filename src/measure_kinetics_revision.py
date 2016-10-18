@@ -7,7 +7,9 @@ import sys
 from skimage import io, color
 import numpy as np
 import matplotlib.pyplot as plt
-from data_tools import colors10
+from data_tools import colors10, split_trace
+from scipy.optimize import curve_fit
+
 
 folder = '/Volumes/Mac Ext 2/Suda Electrochromism/2016-10-13 Suda/'
 roi_path = '/Users/hiroyuki/Documents/Nishizawa Lab/2016 準備中の論文/20160316 Paper Suda electrochromism/20161017 測定項目/rois.csv'
@@ -112,9 +114,9 @@ def organize_data():
         series = count / 3
         pos = count % 3
         # pos = 0: const, 1: oxd, 2: red
-        if (series+1) in [3,7,8,9,13,23]:
-            print('swapped.',(series+1))
-            pos = 2 - pos       # Irregular order.
+        if (series + 1) in [3, 7, 8, 9, 13, 23]:
+            # print('swapped.',(series+1))
+            pos = 2 - pos  # Irregular order.
 
         if series not in dat:
             dat[series] = {}
@@ -125,24 +127,93 @@ def organize_data():
     return dat, sample_names
 
 
-def all_plot(dat, sample_names):
+def all_plot(dat, sample_names, save=False):
     size = (14, 3)
     for i in range(30):
         plt.figure(figsize=size)
         for j in range(3):
             ys = dat[i][j]
             xs = np.array(range(len(ys))) + (j * 800)
+            print(i, j, len(xs))
             plt.plot(xs, ys, c=colors10[0])
-        plt.ylim([0,60])
-        plt.title('Sample #%d %s' % (i+1, sample_names[i]))
+        plt.ylim([0, 60])
+        plt.title('Sample #%d: %s' % (i + 1, sample_names[i]))
+        if save:
+            plt.savefig('%s.png' % sample_names[i])
         plt.show()
+
+
+def first_order(t, a_i, a_f, k, t0):
+    y = a_i + (a_f - a_i) * (1 - np.exp(-k * (t - t0)))
+    return y
+
+
+def print_fit(ts, ys, c):
+    if len(ts) < 46:
+        return
+    fit_start = 5
+    try:
+        popt, _ = curve_fit(first_order, ts[fit_start:45], ys[fit_start:45],[ys[fit_start], ys[45], 0.1, 2])
+        ts_fit = np.linspace(fit_start, 45, 100)
+        ts_fit_plot = np.linspace(fit_start, 45, 100)
+        ys_fit_plot = first_order(ts_fit_plot, *popt)
+        plt.plot(ts_fit_plot, ys_fit_plot, c=c, lw=1)
+    except:
+        pass
+
+
+def plot_split_traces(dat, sample_names):
+    plt.figure(figsize=(20, 15))
+    for i in range(30):
+        v = dat[i][0]
+        t = range(len(v))
+        plt.subplot(6, 3, (i % 6) * 3 + 1)
+        tss, vss = split_trace(t, v, range(2, 1000, 60))
+        count = 0
+        for ts, vs in zip(tss, vss):
+            if len(ts) > 0:
+                print_fit(ts, vs, colors10[count % 10])
+                plt.scatter(ts - min(ts), vs, c=colors10[count % 10], linewidth=0)
+            count += 1
+        plt.title('Const: ' + sample_names[i])
+        plt.ylim([0, max(v)])
+
+        v = dat[i][1]
+        t = range(len(v))
+        plt.subplot(6, 3, (i % 6) * 3 + 2)
+        tss, vss = split_trace(t, v, range(2, 1000, 60))
+        count = 0
+        for ts, vs in zip(tss[1::2], vss[1::2]):
+            if len(ts) > 0:
+                print_fit(ts, vs, colors10[count % 10])
+                plt.scatter(ts - min(ts), vs, c=colors10[count % 10], linewidth=0)
+            count += 1
+        plt.title('Ox: ' + sample_names[i])
+        plt.ylim([0, max(v)])
+
+        v = dat[i][2]
+        t = range(len(v))
+        plt.subplot(6, 3, (i % 6) * 3 + 3)
+        tss, vss = split_trace(t, v, range(2, 1000, 60))
+        count = 0
+        for ts, vs in zip(tss[1::2], vss[1::2]):
+            if len(ts) > 0:
+                print_fit(ts, vs, colors10[count % 10])
+                plt.scatter(ts - min(ts), vs, c=colors10[count % 10], linewidth=0)
+            count += 1
+        plt.title('Red: ' + sample_names[i])
+        plt.ylim([0, max(v)])
+        if i % 6 == 5:
+            plt.show()
+            plt.figure(figsize=(20, 15))
 
 
 def main():
     # all_make_slices() -> Done
     # all_measure_cielab() -> Done
     dat, names = organize_data()
-    all_plot(dat, names)
+    plot_split_traces(dat, names)
+    # all_plot(dat, names)
 
 
 if __name__ == "__main__":
