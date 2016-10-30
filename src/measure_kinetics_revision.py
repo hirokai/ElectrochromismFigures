@@ -27,15 +27,15 @@ def measure_cielab(path, rois):
     return ms
 
 
-def measure_movie_slices(subfolder, roi_samples, max_timepoints=1000, rois_calibration=None):
-    print('Measuring slices: ' + subfolder)
-    folder_path = os.path.join(folder, subfolder)
+def measure_movie_slices(folder_path, roi_samples, max_timepoints=1000, rois_calibration=None):
+    print('Measuring slices: ' + folder_path)
     files = sorted(os.listdir(folder_path))
     lss = np.zeros((3, max_timepoints))
     for i, name in enumerate(files):
-        path = os.path.join(folder, subfolder, name)
-        sys.stdout.write('.')
-        sys.stdout.flush()
+        path = os.path.join(folder_path, name)
+        if i % 10 == 0:
+            sys.stdout.write('.')
+            sys.stdout.flush()
         ls = measure_cielab(path, roi_samples)
         lss[:, i] = ls
     sys.stdout.write('\n')
@@ -44,9 +44,9 @@ def measure_movie_slices(subfolder, roi_samples, max_timepoints=1000, rois_calib
 
 def mk_slices(path):
     base_folder = os.path.dirname(path)
-    slices_base_folder = os.path.join(base_folder,'slices')
+    slices_base_folder = os.path.join(base_folder, 'slices')
     ensure_exists(slices_base_folder)
-    out_folder = os.path.join(slices_base_folder,basename_noext(path))
+    out_folder = os.path.join(slices_base_folder, basename_noext(path))
     ensure_exists(out_folder)
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
@@ -82,37 +82,36 @@ def read_rois(path):
     return obj
 
 
-def all_measure_cielab():
-    folders = sorted(filter(lambda n: os.path.isdir(os.path.join(folder, n)), os.listdir(folder)))
+def all_measure_cielab(folder, roi_path, out_path):
+    folder_slices = os.path.join(folder, 'slices')
+    folders = sorted(filter(lambda n: os.path.isdir(os.path.join(folder_slices, n)), os.listdir(folder_slices)))
     rois = read_rois(roi_path)
+    print(sorted(rois.keys()), folders)
     lsss = []
     max_timepoints = 1000
     for f in folders:
         num = f[4:8]
-        lss = measure_movie_slices(f, rois.get(num), max_timepoints=max_timepoints)
+        fp = os.path.join(folder_slices, f)
+        lss = measure_movie_slices(fp, rois.get(num), max_timepoints=max_timepoints)
         lsss.append(lss)
     result = np.array(lsss).transpose()
     print(result.shape)
     result = np.reshape(result, (max_timepoints, len(folders) * 3))
     print(result.shape)
-    np.savetxt(os.path.join(folder, 'all_l_values.csv'), result, delimiter=",")
+    np.savetxt(out_path, result, delimiter=",")
 
 
-def organize_data():
-    with open(os.path.join(folder, 'all_l_values.csv')) as f:
+def organize_data(dat_path,conditions_path):
+    with open(dat_path) as f:
         reader = csv.reader(f)
         rows = np.array([map(float, r) for r in reader])
     dat = {}
     count = 0
 
-    with open(os.path.join(folder, 'sample_conditions.csv')) as f:
+    with open(conditions_path) as f:
         reader = csv.reader(f)
         reader.next()
-
-        def func(row):
-            return row[1] + ' wt% PEDOT, ' + row[0] + 'rpm'
-
-        sample_names = [func(r) for r in reader]
+        sample_names = [row[2] + ' wt% PEDOT, ' + row[1] + 'rpm' for row in reader]
 
     for i in range(rows.shape[1]):
         series = count / 3
@@ -157,7 +156,7 @@ def print_fit(ts, ys, c):
         return
     fit_start = 5
     try:
-        popt, _ = curve_fit(first_order, ts[fit_start:45], ys[fit_start:45],[ys[fit_start], ys[45], 0.1, 2])
+        popt, _ = curve_fit(first_order, ts[fit_start:45], ys[fit_start:45], [ys[fit_start], ys[45], 0.1, 2])
         ts_fit = np.linspace(fit_start, 45, 100)
         ts_fit_plot = np.linspace(fit_start, 45, 100)
         ys_fit_plot = first_order(ts_fit_plot, *popt)
@@ -214,12 +213,13 @@ def plot_split_traces(dat, sample_names):
 
 def main():
     folders = ['/Volumes/Mac Ext 2/Suda Electrochromism/20161013/', '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/']
-    for folder in folders:
-        all_make_slices(folder)
-    # all_measure_cielab() -> Done
-    # dat, names = organize_data()
-    # plot_split_traces(dat, names)
-    # all_plot(dat, names)
+    # for folder in folders:
+    #     all_make_slices(folder)
+    # roi_path = '../parameters/20161019/rois.csv'
+    # all_measure_cielab(folders[1], roi_path, '../data/20161019_all_cie_values.csv')
+    dat, names = organize_data('../data/20161019_all_cie_values.csv','../parameters/20161019/sample_conditions.csv')
+    plot_split_traces(dat, names)
+    all_plot(dat, names)
 
 
 if __name__ == "__main__":
