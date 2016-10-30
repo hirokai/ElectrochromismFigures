@@ -9,9 +9,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from data_tools import colors10, split_trace
 from scipy.optimize import curve_fit
+from util import ensure_exists, basename_noext
 
-
-folder = '/Volumes/Mac Ext 2/Suda Electrochromism/2016-10-13 Suda/'
+folder = '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/'
 roi_path = '/Users/hiroyuki/Documents/Nishizawa Lab/2016 準備中の論文/20160316 Paper Suda electrochromism/20161017 測定項目/rois.csv'
 names_path = ''
 
@@ -43,7 +43,11 @@ def measure_movie_slices(subfolder, roi_samples, max_timepoints=1000, rois_calib
 
 
 def mk_slices(path):
-    out_folder = path + '_out'
+    base_folder = os.path.dirname(path)
+    slices_base_folder = os.path.join(base_folder,'slices')
+    ensure_exists(slices_base_folder)
+    out_folder = os.path.join(slices_base_folder,basename_noext(path))
+    ensure_exists(out_folder)
     if not os.path.exists(out_folder):
         os.makedirs(out_folder)
     out_path = os.path.join(out_folder, "out%04d.png")
@@ -53,7 +57,7 @@ def mk_slices(path):
     call(cmd)
 
 
-def all_make_slices():
+def all_make_slices(folder):
     files = filter(lambda n: n.find('.MOV') >= 0, os.listdir(folder))
     print(files)
     for n in files:
@@ -209,10 +213,12 @@ def plot_split_traces(dat, sample_names):
 
 
 def main():
-    # all_make_slices() -> Done
+    folders = ['/Volumes/Mac Ext 2/Suda Electrochromism/20161013/', '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/']
+    for folder in folders:
+        all_make_slices(folder)
     # all_measure_cielab() -> Done
-    dat, names = organize_data()
-    plot_split_traces(dat, names)
+    # dat, names = organize_data()
+    # plot_split_traces(dat, names)
     # all_plot(dat, names)
 
 
