@@ -19,7 +19,7 @@ def smooth(x, window_len=11, window='hanning'):
 
 
 def main():
-    df = pd.read_csv('../data/20161026 tensitle testing.csv', names=list('abcdefghijklmno'), header=0)
+    df = pd.read_csv('../data/20161026 tensile testing.csv', names=list('abcdefghijklmno'), header=0)
     df = df[['a', 'e', 'f', 'i', 'l', 'm']]
     df.columns = ['num', 'pedot', 'rpm', 'w', 'l', 'thick']
     print(df)
@@ -40,6 +40,7 @@ def main():
         t = float(d['thick'])
         xs = vs[1, :] / l
         ys = smooth(vs[0, :])[5:-5] / (w * t / 1000) * 1e3
+        plt.figure(figsize=(10,2))
         plt.plot(xs, ys)
         plt.xlabel('Strain [-]')
         plt.ylabel('Stress [MPa]')
