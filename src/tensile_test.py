@@ -19,10 +19,11 @@ def smooth(x, window_len=11, window='hanning'):
 
 
 def main():
+    df2 = pd.DataFrame()
     df = pd.read_csv('../data/20161026 tensile testing.csv', names=list('abcdefghijklmno'), header=0)
     df = df[['a', 'e', 'f', 'i', 'l', 'm']]
     df.columns = ['num', 'pedot', 'rpm', 'w', 'l', 'thick']
-    print(df)
+    plt.figure(figsize=(20, 6))
     for i in range(1, 21):
         path = os.path.join(folder, '%02d.csv' % i)
         with open(path) as f:
@@ -34,20 +35,45 @@ def main():
                 vs.append(map(float, row))
         vs = np.array(vs).transpose()
         d = df[df['num'] == i]
-        print(d)
         l = float(d['l'])
         w = float(d['w'])
         t = float(d['thick'])
-        xs = vs[1, :] / l
+        pedot = int(d['pedot'])
+        rpm = int(d['rpm'])
+        xs = (vs[1, :] - vs[1, 0]) / l
         ys = smooth(vs[0, :])[5:-5] / (w * t / 1000) * 1e3
-        plt.figure(figsize=(10,2))
-        plt.plot(xs, ys)
-        plt.xlabel('Strain [-]')
+        ys = ys - ys[0]
+        if i == 16:
+            ys -= ys[np.argmax(xs >= 0.05)]
+            xs -= 0.05
+        xi0 = np.argmax(xs > 0)
+        xi1 = np.argmax(xs > 0.05)
+        em = (ys[xi1] - ys[xi0]) / (xs[xi1] - xs[xi0])
+        print(i, pedot, rpm, em)
+        df2 = df2.append({'i': i, 'pedot': pedot, 'rpm': rpm, 'modulus': em},ignore_index=True)
+        pos = {20: {500: 1, 2000: 2}, 30: {500: 3, 2000: 4}, 40: {500: 5, 2000: 6}}
+        p = (pos.get(pedot) or {}).get(rpm) or 1
+        plt.subplot(3, 2, p)
+        plt.plot(xs, ys, label=str(i))
+        plt.legend()
+        if p >= 5:
+            plt.xlabel('Strain [-]')
+        else:
+            plt.xlabel('')
         plt.ylabel('Stress [MPa]')
         plt.xlim([-0.1, 3.1])
         plt.ylim([-0.1, 5])
-        plt.title('%02d: %d wt PEDOT, %d rpm' % (i, float(d['pedot']), float(d['rpm'])))
-        plt.show()
+        plt.title('%02d: %d wt PEDOT, %d rpm' % (i, pedot, rpm))
+    plt.show()
+    gr = df2.groupby('pedot')
+    print(gr.mean()['modulus'],gr.std()['modulus'])
+    import seaborn as sns
+    sns.swarmplot(x='pedot',y='modulus',hue='rpm',data=df2,size=10,edgecolor=None)
+    sns.barplot(x='pedot',y='modulus',data=df2,palette="Set3",capsize=0.1)
+    plt.ylim([0,40])
+    plt.xlabel('PEDOT ratio [wt%]')
+    plt.ylabel('Elastic modulus [MPa]')
+    plt.show()
 
 
 main()
