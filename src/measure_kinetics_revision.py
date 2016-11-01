@@ -10,21 +10,10 @@ import matplotlib.pyplot as plt
 from data_tools import colors10, split_trace
 from scipy.optimize import curve_fit
 from util import ensure_exists, basename_noext
-
-folder = '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/'
+from image_tools import get_cie_l_rois
+folder = '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/'
 roi_path = '/Users/hiroyuki/Documents/Nishizawa Lab/2016 準備中の論文/20160316 Paper Suda electrochromism/20161017 測定項目/rois.csv'
 names_path = ''
-
-
-def measure_cielab(path, rois):
-    rgb_whole = io.imread(path)
-    ms = []
-    for roi in rois:
-        rgb = rgb_whole[roi[1]:roi[1] + roi[3], roi[0]:roi[0] + roi[2], :]
-        lab = color.rgb2lab(rgb)
-        m = np.mean(lab[:, :, 0])
-        ms.append(m)
-    return ms
 
 
 def measure_movie_slices(folder_path, roi_samples, max_timepoints=1000, rois_calibration=None):
@@ -36,7 +25,7 @@ def measure_movie_slices(folder_path, roi_samples, max_timepoints=1000, rois_cal
         if i % 10 == 0:
             sys.stdout.write('.')
             sys.stdout.flush()
-        ls = measure_cielab(path, roi_samples)
+        ls = get_cie_l_rois(path, roi_samples)
         lss[:, i] = ls
     sys.stdout.write('\n')
     return np.array(lss)
@@ -213,13 +202,13 @@ def plot_split_traces(dat, sample_names):
 
 def main():
     folders = ['/Volumes/Mac Ext 2/Suda Electrochromism/20161013/', '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/']
-    # for folder in folders:
-    #     all_make_slices(folder)
+    for folder in folders:
+        all_make_slices(folder)
     # roi_path = '../parameters/20161019/rois.csv'
     # all_measure_cielab(folders[1], roi_path, '../data/20161019_all_cie_values.csv')
-    dat, names = organize_data('../data/20161019_all_cie_values.csv','../parameters/20161019/sample_conditions.csv')
-    plot_split_traces(dat, names)
-    all_plot(dat, names)
+    # dat, names = organize_data('../data/20161019_all_cie_values.csv','../parameters/20161019/sample_conditions.csv')
+    # plot_split_traces(dat, names)
+    # all_plot(dat, names)
 
 
 if __name__ == "__main__":
