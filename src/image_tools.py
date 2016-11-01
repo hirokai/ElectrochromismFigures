@@ -26,3 +26,14 @@ def do_cie_analysis(i, path, roi, show_progress=True):
         sys.stdout.write('.')
         sys.stdout.flush()
     return np.concatenate((np.array([i]), get_cie_roi(path, roi)))
+
+
+def get_cie_l_rois(img_path, rois):
+    rgb_whole = io.imread(img_path)
+    ms = []
+    for roi in rois:
+        rgb = rgb_whole[roi[1]:roi[1] + roi[3], roi[0]:roi[0] + roi[2], :]
+        lab = color.rgb2lab(rgb)
+        m = np.mean(lab[:, :, 0])
+        ms.append(m)
+    return ms
