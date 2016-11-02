@@ -11,8 +11,10 @@ from data_tools import colors10, split_trace
 from scipy.optimize import curve_fit
 from util import ensure_exists, basename_noext
 from image_tools import get_cie_l_rois
+from test_calibration_fit import correct_cielab
+
+
 folder = '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/'
-roi_path = '/Users/hiroyuki/Documents/Nishizawa Lab/2016 準備中の論文/20160316 Paper Suda electrochromism/20161017 測定項目/rois.csv'
 names_path = ''
 
 
@@ -90,7 +92,7 @@ def all_measure_cielab(folder, roi_path, out_path):
     np.savetxt(out_path, result, delimiter=",")
 
 
-def organize_data(dat_path,conditions_path):
+def organize_data(dat_path, conditions_path):
     with open(dat_path) as f:
         reader = csv.reader(f)
         rows = np.array([map(float, r) for r in reader])
@@ -201,11 +203,13 @@ def plot_split_traces(dat, sample_names):
 
 
 def main():
+    os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
     folders = ['/Volumes/Mac Ext 2/Suda Electrochromism/20161013/', '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/']
-    for folder in folders:
-        all_make_slices(folder)
-    # roi_path = '../parameters/20161019/rois.csv'
-    # all_measure_cielab(folders[1], roi_path, '../data/20161019_all_cie_values.csv')
+    # for folder in folders:
+    #     all_make_slices(folder)
+    roi_path = 'parameters/20161019/rois.csv'
+    # all_measure_cielab(folders[0], roi_path, '../data/20161013_all_cie_values.csv')
+    correct_cielab('data/20161013_all_l_values.csv','data/20161013 calibration scale.txt','data/20161013_all_cie_values_corrected.csv')
     # dat, names = organize_data('../data/20161019_all_cie_values.csv','../parameters/20161019/sample_conditions.csv')
     # plot_split_traces(dat, names)
     # all_plot(dat, names)

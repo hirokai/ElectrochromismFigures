@@ -6,6 +6,17 @@ import os
 from util import sort_with_order
 
 
+def correct_cielab(in_csv, scale_csv, out_csv):
+    with open(in_csv) as f:
+        reader = csv.reader(f)
+        vs = np.array([map(float,r) for r in reader])
+    with open(scale_csv) as f:
+        reader = csv.reader(f)
+        ss = np.array([map(float,r) for r in reader]).flatten()
+    print(np.prod([vs,ss]))
+    return
+
+
 def scaled(vs, ref, num):
     def func(k):
         ds = vs[ref, :] - k * vs[num, :]
@@ -47,7 +58,7 @@ def main():
         vs = np.array([map(float, r) for r in reader])
 
     v_totals = []
-    for ref in range(0, 72):
+    for ref in range(0, vs.shape[0]):
         ks, rs, v_total = optimize_with_ref(vs, ref)
         # print(ref,v_total)
         v_totals.append((ref, v_total))
@@ -60,11 +71,14 @@ def main():
     ks, rs, _ = optimize_with_ref(vs, res[0][0])
     plt.plot(rs.transpose(), alpha=0.7)
     print(ks)
-    np.savetxt('data/20161013 calibration scale.txt',ks)
+    np.savetxt('data/20161013 calibration scale.txt', ks)
     plt.show()
     # Plot: Scaling by worst fitting
     _, rs2, _ = optimize_with_ref(vs, res[-1][0])
     plt.plot(rs2.transpose(), alpha=0.7)
+    plt.show()
+    plt.plot(ks)
+    plt.ylim([0,1.5])
     plt.show()
 
     sort_and_plot(rs)

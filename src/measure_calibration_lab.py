@@ -244,8 +244,8 @@ def main():
         lss2[:, i] = sort_with_order(lss[:, i], chart_order)
         # lss2[:, i] /= lss2[10, i]
     plt.plot(lss)
-    np.savetxt('data/20161013 calibration l values.csv',lss.transpose())
     plt.show()
+    np.savetxt('data/20161013 calibration l values.csv',lss.transpose())
     # plt.plot(ordered_chart_values, linewidth=3)
     plt.plot(lss2)
     plt.show()
