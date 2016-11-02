@@ -209,7 +209,7 @@ def main():
     #     all_make_slices(folder)
     roi_path = 'parameters/20161019/rois.csv'
     # all_measure_cielab(folders[0], roi_path, '../data/20161013_all_cie_values.csv')
-    correct_cielab('data/20161013_all_l_values.csv','data/20161013 calibration scale.txt','data/20161013_all_cie_values_corrected.csv')
+    correct_cielab('data/kinetics/20161013_all_l_values.csv','data/kinetics/20161013 calibration scale.txt','kinetics/data/20161013_all_cie_values_corrected.csv')
     # dat, names = organize_data('../data/20161019_all_cie_values.csv','../parameters/20161019/sample_conditions.csv')
     # plot_split_traces(dat, names)
     # all_plot(dat, names)

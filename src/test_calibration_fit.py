@@ -53,7 +53,7 @@ def sort_and_plot(rs):
 def main():
     os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
 
-    with open('data/20161013 calibration l values.csv') as f:
+    with open('data/kinetics/20161013 calibration l values.csv') as f:
         reader = csv.reader(f, delimiter=' ')
         vs = np.array([map(float, r) for r in reader])
 
@@ -71,7 +71,7 @@ def main():
     ks, rs, _ = optimize_with_ref(vs, res[0][0])
     plt.plot(rs.transpose(), alpha=0.7)
     print(ks)
-    np.savetxt('data/20161013 calibration scale.txt', ks)
+    np.savetxt('data/kinetics/20161013 calibration scale.txt', ks)
     plt.show()
     # Plot: Scaling by worst fitting
     _, rs2, _ = optimize_with_ref(vs, res[-1][0])

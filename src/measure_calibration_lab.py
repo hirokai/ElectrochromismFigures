@@ -245,7 +245,7 @@ def main():
         # lss2[:, i] /= lss2[10, i]
     plt.plot(lss)
     plt.show()
-    np.savetxt('data/20161013 calibration l values.csv',lss.transpose())
+    np.savetxt('data/kinetics/20161013 calibration l values.csv',lss.transpose())
     # plt.plot(ordered_chart_values, linewidth=3)
     plt.plot(lss2)
     plt.show()
