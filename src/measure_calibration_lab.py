@@ -42,22 +42,23 @@ def get_image_path(movie, file):
 
 def mk_cells(ps):
     # Two vectors
-    x0 = ps[0][0]
-    y0 = ps[0][1]
-    ax = (ps[1][0] - x0) / 4
-    ay = (ps[1][1] - y0) / 4
-    bx = (ps[3][0] - x0) / 6
-    by = (ps[3][1] - y0) / 6
+    x0 = ps[0][1]
+    y0 = ps[0][0]
+    ax = (ps[1][1] - x0) / 4
+    ay = (ps[1][0] - y0) / 4
+    bx = (ps[3][1] - x0) / 6
+    by = (ps[3][0] - y0) / 6
 
     cells = []
     w = 0.1  # width ratio
+    s = 4.0
     for ai in range(4):
         for bi in range(6):
             cells.append(
-                RectROI(*map(int, [x0 + ax * ai + bx * bi + 5,
-                                   y0 + ay * ai + by * bi + 5,
-                                   5,
-                                   5])))
+                RectROI(*map(int, [x0 + ax * (ai + 0.4) - s / 2 + bx * (bi + 0.4),
+                                   y0 + ay * (ai + 0.3) - s / 2 + by * (bi + 0.3),
+                                   s,
+                                   s])))
     return cells
 
 
@@ -82,7 +83,10 @@ class RectROI:
         self.h = h
 
     def values(self):
-        return [self.x,self.y,self.w,self.h]
+        return [self.x, self.y, self.w, self.h]
+
+    def __repr__(self):
+        return 'Rect(%d,%d,%d,%d)' % (self.x, self.y, self.w, self.h)
 
 
 class PointROI:
@@ -92,15 +96,50 @@ class PointROI:
     def __getitem__(self, item):
         return self.points[item]
 
-    def rect(self):
-        print(self.points)
+    def rect(self):     # Return bounding rect.
         xs = map(lambda a: a[0], self.points)
-        ys = map(lambda a: a[0], self.points)
+        ys = map(lambda a: a[1], self.points)
         x = min(xs)
         y = min(ys)
         w = max(xs) - x
         h = max(ys) - y
         return [x, y, w, h]
+
+    def __repr__(self):
+        return 'PointROI(%s)' % self.points.__repr__()
+
+
+def draw_cells(cellss, img=None, count=None):
+    from itertools import chain
+
+    cells = list(chain.from_iterable(cellss))
+    for c in cells:
+        r = plt.Rectangle(xy=[c.x + c.w / 2, c.y + c.h / 2], width=c.w, height=c.h, facecolor='none', edgecolor='red')
+        plt.gca().add_patch(r)
+    if img is None:
+        plt.xlim([0, 500])
+        plt.ylim([0, 500])
+    else:
+        plt.imshow(img)
+    if count is not None:
+        plt.title(str(count))
+    plt.show()
+
+
+def get_cie_rois_custom(path, rois):
+    img = io.imread(path)
+    labs = []
+    img2 = np.zeros((240,10,3))
+    count = 0
+    for roi in rois:
+        rgb = img[roi[1]:roi[1] + roi[3], roi[0]:roi[0] + roi[2], :]
+        img2[count*10:count*10+roi[3],0:roi[2],:] = rgb
+        lab = color.rgb2lab(rgb)
+        labs.append(np.mean(lab, axis=(0, 1)))
+        count += 1
+    plt.imshow(img2)
+    plt.show()
+    return np.array(labs)
 
 
 def main():
@@ -108,18 +147,16 @@ def main():
     roiss = read_csv('parameters/20161013/calibration_rois.csv')
     count = 0
     img = np.zeros((240, 1000, 3))
+    line_counts = []
     for k, rois in roiss.iteritems():
         path = get_image_path(movie_names[int(k)], 1)
         cellss = map(mk_cells, rois)
-        print(cellss)
-        # roi = [rois[0][0][0], rois[0][0][1], 200, 100]
-        # img2 = io.imread(path)
-        # rgb = img2[roi[1]:roi[1] + roi[3], roi[0]:roi[0] + roi[2], :]
-        # plt.imshow(rgb)
-        # plt.show()
+        print(zip(rois,cellss))
+        img2 = io.imread(path)
+        draw_cells(cellss, img2,count)
         for cells in cellss:
             ls = get_cie_rois(path, map(lambda cell: cell.values(), cells))
-            print(ls[:, 0])
+            # print(ls[:, 0])
             if np.isnan(ls[0, 0]):
                 print('NaN', movie_names[int(k)], cells)
             lab = np.zeros((240, 10, 3))
@@ -130,10 +167,12 @@ def main():
             rgb = color.lab2rgb(lab)
             img[:, (count * 10):(count * 10 + 10), :] = rgb
             count += 1
-            # print(ls)
-        if count >= 5:
-            break
+            # if count >= 5:
+            #     break
+        line_counts.append(count)
     img = img[:, 0:(count * 10), :]
+    for i in line_counts:
+        img[:, i * 10 - 1, :] = 1
     plt.imshow(img)
     plt.show()
 

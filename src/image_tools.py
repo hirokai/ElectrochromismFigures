@@ -1,7 +1,7 @@
 from skimage import io, color
 import numpy as np
 import sys
-
+import scipy.stats
 
 def get_cie_roi(path, roi):
     rgb = io.imread(path)[roi[1]:roi[1] + roi[3], roi[0]:roi[0] + roi[2], :]
@@ -9,13 +9,19 @@ def get_cie_roi(path, roi):
     return np.mean(lab, axis=(0, 1))
 
 
-def get_cie_rois(path, rois):
+def get_cie_rois(path, rois, mode='mean'):
     img = io.imread(path)
     labs = []
     for roi in rois:
         rgb = img[roi[1]:roi[1] + roi[3], roi[0]:roi[0] + roi[2], :]
         lab = color.rgb2lab(rgb)
-        labs.append(np.mean(lab, axis=(0, 1)))
+        if mode == 'mean':
+            vs = np.mean(lab, axis=(0, 1))
+        elif mode == 'mode':
+            raise ValueError('No implementation yet.')
+        else:
+            raise ValueError('Invalid param.')
+        labs.append(vs)
     return np.array(labs)
 
 
