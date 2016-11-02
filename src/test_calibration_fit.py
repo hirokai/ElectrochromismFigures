@@ -60,6 +60,7 @@ def main():
     ks, rs, _ = optimize_with_ref(vs, res[0][0])
     plt.plot(rs.transpose(), alpha=0.7)
     print(ks)
+    np.savetxt('data/20161013 calibration scale.txt',ks)
     plt.show()
     # Plot: Scaling by worst fitting
     _, rs2, _ = optimize_with_ref(vs, res[-1][0])
@@ -68,7 +69,6 @@ def main():
 
     sort_and_plot(rs)
     sort_and_plot(rs2)
-    # np.savetxt('20161013 calibration scaled.txt',rs)
 
 
 if __name__ == "__main__":
