@@ -24,7 +24,7 @@ def read_csv(csv_path):
         i = int(r[0])
         if i not in vs:
             vs[i] = []
-        vs[i].append([r[3], r[2]])
+        vs[i].append([r[1], r[2]])
     rois = {}
     for k, v in vs.iteritems():
         if len(v) % 4 != 0:
@@ -42,12 +42,12 @@ def get_image_path(movie, file):
 
 def mk_cells(ps):
     # Two vectors
-    x0 = ps[0][1]
-    y0 = ps[0][0]
-    ax = (ps[1][1] - x0) / 4
-    ay = (ps[1][0] - y0) / 4
-    bx = (ps[3][1] - x0) / 6
-    by = (ps[3][0] - y0) / 6
+    x0 = ps[0][0]
+    y0 = ps[0][1]
+    ax = (ps[1][0] - x0) / 4
+    ay = (ps[1][1] - y0) / 4
+    bx = (ps[3][0] - x0) / 6
+    by = (ps[3][1] - y0) / 6
 
     cells = []
     w = 0.1  # width ratio
