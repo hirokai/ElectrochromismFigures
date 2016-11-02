@@ -6,6 +6,15 @@ def by_indices(xs, idxs):
     return [xs[i] for i in filter(lambda i: i < len(xs), idxs)]
 
 
+# Permutation of list
+def sort_with_order(vs, order):
+    import numpy as np
+    r = np.zeros(len(order))
+    for i, o in enumerate(order):
+        r[i] = vs[o]
+    return r
+
+
 def ensure_exists(folder):
     if not os.path.exists(folder):
         os.makedirs(folder)
