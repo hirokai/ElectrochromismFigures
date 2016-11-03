@@ -12,7 +12,7 @@ from scipy.optimize import curve_fit
 from util import ensure_exists, basename_noext
 from image_tools import get_cie_l_rois
 from test_calibration_fit import correct_cielab
-
+import luigi
 
 folder = '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/'
 names_path = ''
@@ -121,20 +121,21 @@ def organize_data(dat_path, conditions_path):
     return dat, sample_names
 
 
-def all_plot(dat, sample_names, save=False):
+def all_plot(dat, sample_names, save_folder=None):
     size = (14, 3)
     for i in range(30):
         plt.figure(figsize=size)
         for j in range(3):
             ys = dat[i][j]
             xs = np.array(range(len(ys))) + (j * 800)
-            print(i, j, len(xs))
+            # print(i, j, len(xs))
             plt.plot(xs, ys, c=colors10[0])
         plt.ylim([0, 60])
         plt.title('Sample #%d: %s' % (i + 1, sample_names[i]))
-        if save:
-            plt.savefig('%s.png' % sample_names[i])
-        plt.show()
+        if save_folder:
+            plt.savefig(os.path.join(save_folder, '%s.png' % sample_names[i]))
+        else:
+            plt.show()
 
 
 def first_order(t, a_i, a_f, k, t0):
@@ -156,7 +157,7 @@ def print_fit(ts, ys, c):
         pass
 
 
-def plot_split_traces(dat, sample_names):
+def plot_split_traces(dat, sample_names, save_folder=None):
     plt.figure(figsize=(20, 15))
     for i in range(30):
         v = dat[i][0]
@@ -198,21 +199,91 @@ def plot_split_traces(dat, sample_names):
         plt.title('Red: ' + sample_names[i])
         plt.ylim([0, max(v)])
         if i % 6 == 5:
-            plt.show()
+            if save_folder:
+                plt.savefig(os.path.join(save_folder, '%02d.png' % i))
+            else:
+                plt.show()
             plt.figure(figsize=(20, 15))
+
+
+class MakeAllSlices(luigi.Task):
+    folder = luigi.Parameter()
+
+    def run(self):
+        all_make_slices(self.folder)
+
+    def output(self):
+        return [luigi.LocalTarget(os.path.join(self.folder, 'slices'))]
+
+
+class RawLValues(luigi.Task):
+    name = luigi.Parameter()
+    folder = luigi.Parameter()
+
+    def requires(self):
+        return MakeAllSlices(folder=self.folder)
+
+    def output(self):
+        return luigi.LocalTarget(os.path.join('data', 'kinetics', '%s all_l_values.csv' % self.name))
+
+    def run(self):
+        roi_path = 'parameters/%s/rois.csv' % self.name
+        all_measure_cielab(self.folder, roi_path, self.output())
+
+
+def correct_cielab_stub(in_csv, scale_csv, out_csv):
+    import shutil
+    shutil.copyfile(in_csv, out_csv)
+
+
+class CorrectedLValues(luigi.Task):
+    name = luigi.Parameter()
+    folder = luigi.Parameter()
+
+    def requires(self):
+        return RawLValues(name=self.name, folder=self.folder)
+
+    def output(self):
+        return luigi.LocalTarget(os.path.join('data', 'kinetics', '%s all_l_values_corrected_fixme.csv' % self.name))
+
+    def run(self):
+        correct_cielab_stub(self.input().path,
+                       os.path.join('data', 'kinetics', '%s calibration scale.txt' % self.name),
+                       self.output().path)
+
+
+class OrganizeAndPlotData(luigi.Task):
+    name = luigi.Parameter()
+    folder = luigi.Parameter()
+
+    def requires(self):
+        return CorrectedLValues(name=self.name, folder=self.folder)
+
+    def run(self):
+        in_csv = os.path.join('data', 'kinetics', '%s all_l_values.csv' % self.name)
+        out_csv = os.path.join('parameters', self.name, 'sample_conditions.csv')
+        dat, names = organize_data(in_csv, out_csv)
+        save_folder = os.path.join('dist', 'kinetics_revision', self.name)
+        ensure_exists(save_folder)
+        plot_split_traces(dat, names, save_folder=save_folder)
+        all_plot(dat, names, save_folder=save_folder)
+
+    def output(self):
+        return luigi.LocalTarget(os.path.join('dist', 'kinetics_revision', self.name))
+
+
+class MeasureAndPlotAll(luigi.WrapperTask):
+    def requires(self):
+        folders = {'20161013': '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/',
+                   '20161019': '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/'}
+        tasks = [OrganizeAndPlotData(name=k, folder=v) for k, v in folders.iteritems()]
+        for t in tasks:
+            yield t
 
 
 def main():
     os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
-    folders = ['/Volumes/Mac Ext 2/Suda Electrochromism/20161013/', '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/']
-    # for folder in folders:
-    #     all_make_slices(folder)
-    roi_path = 'parameters/20161019/rois.csv'
-    # all_measure_cielab(folders[0], roi_path, '../data/20161013_all_cie_values.csv')
-    correct_cielab('data/kinetics/20161013_all_l_values.csv','data/kinetics/20161013 calibration scale.txt','kinetics/data/20161013_all_cie_values_corrected.csv')
-    # dat, names = organize_data('../data/20161019_all_cie_values.csv','../parameters/20161019/sample_conditions.csv')
-    # plot_split_traces(dat, names)
-    # all_plot(dat, names)
+    luigi.run(['MeasureAndPlotAll'])
 
 
 if __name__ == "__main__":

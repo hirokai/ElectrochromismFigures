@@ -80,17 +80,6 @@ def sort_with_order(vs, order):
     return r
 
 
-# chart_order = [23, 12, 9, 22, 0, 14, 7, 3, 21, 17, 16, 6, 5, 10, 15, 18]
-chart_l_values = map(extract_l, chart_colors_str.split("\n"))
-chart_order = [i[0] for i in sorted(enumerate(chart_l_values), key=lambda x:x[1])]
-print(list(enumerate(chart_order)))
-plt.plot(chart_l_values, marker='o')
-plt.show()
-ordered_chart_values = sort_with_order(chart_l_values, chart_order)
-plt.plot(ordered_chart_values, marker='o')
-plt.show()
-
-
 def get_image_path(movie, file):
     return '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/slices/MVI_%d/out%04d.png' % (movie, file)
 
@@ -203,6 +192,17 @@ def extract_used_l(ls):
 
 def main():
     os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
+
+    # chart_order = [23, 12, 9, 22, 0, 14, 7, 3, 21, 17, 16, 6, 5, 10, 15, 18]
+    chart_l_values = map(extract_l, chart_colors_str.split("\n"))
+    chart_order = [i[0] for i in sorted(enumerate(chart_l_values), key=lambda x: x[1])]
+    print(list(enumerate(chart_order)))
+    plt.plot(chart_l_values, marker='o')
+    plt.show()
+    ordered_chart_values = sort_with_order(chart_l_values, chart_order)
+    plt.plot(ordered_chart_values, marker='o')
+    plt.show()
+
     roiss = read_csv('parameters/20161013/calibration_rois.csv')
     count = 0
     img = np.zeros((240, 1000, 3))
