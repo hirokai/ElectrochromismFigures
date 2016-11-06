@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from image_tools import get_cie_rois
 from skimage import color
 import luigi
+from luigi_tools import cleanup
+import sys
 
 
 class RectROI:
@@ -184,8 +186,18 @@ def extract_used_l(ls):
     return [ls[23], ls[22], ls[21], ls[18]]
 
 
+def mk_rgb_column(labs):
+    lab = np.zeros((240, 10, 3))
+    for i in range(24):
+        lab[(i * 10):(i * 10 + 10), :, 0] = labs[i, 0]
+        lab[(i * 10):(i * 10 + 10), :, 1] = labs[i, 1]
+        lab[(i * 10):(i * 10 + 10), :, 2] = labs[i, 2]
+    rgb = color.lab2rgb(lab)
+    return rgb
+
+
 # Measure L values from ROIs of 24 cells of the color chart for each image.
-def process(movie_list_path, roi_path, out_path):
+def process(movie_list_path, roi_path, out_path, debug_drawcells=False, debug_show_samples=False):
     with open(movie_list_path) as f:
         reader = csv.reader(f)
         reader.next()
@@ -198,60 +210,66 @@ def process(movie_list_path, roi_path, out_path):
     # chart_order = [23, 12, 9, 22, 0, 14, 7, 3, 21, 17, 16, 6, 5, 10, 15, 18]
     chart_order = [i[0] for i in sorted(enumerate(chart_l_values), key=lambda x: x[1])]
     print(list(enumerate(chart_order)))
-    plt.plot(chart_l_values, marker='o')
-    plt.show()
-    ordered_chart_values = sort_with_order(chart_l_values, chart_order)
-    plt.plot(ordered_chart_values, marker='o')
-    plt.show()
+    # plt.plot(chart_l_values, marker='o')
+    # plt.show()
+    # ordered_chart_values = sort_with_order(chart_l_values, chart_order)
+    # plt.plot(ordered_chart_values, marker='o')
+    # plt.show()
 
     roiss = read_csv(roi_path)
+    count_rois = len(reduce(lambda a, b: a + b, roiss.values()))
+    if debug_show_samples:
+        img_samples = np.zeros((10 * 24, 10 * count_rois, 3))  # for
     count = 0
-    img = np.zeros((240, 1000, 3))
-    line_counts = []
+    line_counts = []  # Will be used for vertical lines between images.
     lss = []
     slices = []
     for k, rois in roiss.iteritems():
+        sys.stdout.write('.')
+        sys.stdout.flush()
         path = get_image_path(movie_folder[int(k) - 1], 1)
+
+        # There are 24 cells for each ROI of color chart.
         cellss = map(mk_cells, rois)
-        # print(zip(rois,cellss))
-        # img2 = io.imread(path)
-        # draw_cells(cellss, img2,count)
+
+        if debug_drawcells:
+            # Draw 24 cells for measurement.
+            print(zip(rois, cellss))
+            img2 = io.imread(path)
+            draw_cells(cellss, img2, count)
+
         for cells in cellss:
-            ls = get_cie_rois(path, map(lambda cell: cell.values(), cells))
-            # print(ls[:, 0])
+            # Collect 24 mean (L,a,b) values of each of 24 cells.
+            labs = get_cie_rois(path, map(lambda cell: cell.values(), cells))
             slices.append(k)  # slices has 1-based index of image.
-            lss.append(ls[:, 0])
-            if np.isnan(ls[0, 0]):
+            lss.append(labs[:, 0])
+            if np.isnan(labs[0, 0]):
                 print('NaN', movie_names[int(k) - 1], cells)
-            lab = np.zeros((240, 10, 3))
-            for i in range(24):
-                lab[(i * 10):(i * 10 + 10), :, 0] = ls[i, 0]
-                lab[(i * 10):(i * 10 + 10), :, 1] = ls[i, 1]
-                lab[(i * 10):(i * 10 + 10), :, 2] = ls[i, 2]
-            rgb = color.lab2rgb(lab)
-            img[:, (count * 10):(count * 10 + 10), :] = rgb
+            if debug_show_samples:
+                img_samples[:, (count * 10):(count * 10 + 10), :] = mk_rgb_column(labs)
             count += 1
             # if count >= 5:
             #     break
         line_counts.append(count)
-    img = img[:, 0:(count * 10), :]
-    for i in line_counts:
-        img[:, i * 10 - 1, :] = 1
-    # plt.imshow(img)
-    # plt.show()
+    sys.stdout.write('\n')
+    if debug_show_samples:
+        # Draw vertical lines in sample image between different source images.
+        for i in line_counts:
+            img_samples[:, i * 10 - 1, :] = 1
+        plt.imshow(img_samples)
+        plt.show()
     lss = np.array(lss).transpose()
     l_mean = np.mean(lss, axis=1)
     chart_order = [i[0] for i in sorted(enumerate(l_mean), key=lambda x: x[1])]
     lss2 = np.zeros((len(chart_order), lss.shape[1]))
+    np.savetxt(out_path, np.concatenate(([slices], lss)).transpose())
+    # plt.plot(lss)
+    # plt.show()
     for i in range(lss.shape[1]):
         lss2[:, i] = sort_with_order(lss[:, i], chart_order)
-        # lss2[:, i] /= lss2[10, i]
-    plt.plot(lss)
-    plt.show()
-    np.savetxt(out_path, np.concatenate(([slices], lss)).transpose())
     # plt.plot(ordered_chart_values, linewidth=3)
-    plt.plot(lss2)
-    plt.show()
+    # plt.plot(lss2)
+    # plt.show()
 
 
 class MeasureLValuesOfColorCharts(luigi.Task):
@@ -260,7 +278,7 @@ class MeasureLValuesOfColorCharts(luigi.Task):
 
     def run(self):
         movie_list_path = os.path.join('parameters/', self.name, 'movie_list.csv')
-        process(movie_list_path, self.roipath, self.output().path)
+        process(movie_list_path, self.roipath, self.output().path,debug_show_samples=True)
 
     def output(self):
         return luigi.LocalTarget('data/kinetics/' + str(self.name) + ' calibration l values.csv')
@@ -268,7 +286,7 @@ class MeasureLValuesOfColorCharts(luigi.Task):
 
 def main():
     os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
-
+    cleanup(MeasureLValuesOfColorCharts(name='20161013', roipath='parameters/20161013/calibration_rois.csv'))
     luigi.run(
         ['MeasureLValuesOfColorCharts', '--name', '20161013', '--roipath', 'parameters/20161013/calibration_rois.csv'])
 
