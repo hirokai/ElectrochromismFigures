@@ -286,9 +286,9 @@ class MeasureLValuesOfColorCharts(luigi.Task):
 
 def main():
     os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
-    cleanup(MeasureLValuesOfColorCharts(name='20161013', roipath='parameters/20161013/calibration_rois.csv'))
+    cleanup(MeasureLValuesOfColorCharts(name='20161019', roipath='parameters/20161019/calibration_rois.csv'))
     luigi.run(
-        ['MeasureLValuesOfColorCharts', '--name', '20161013', '--roipath', 'parameters/20161013/calibration_rois.csv'])
+        ['MeasureLValuesOfColorCharts', '--name', '20161019', '--roipath', 'parameters/20161019/calibration_rois.csv'])
 
 
 if __name__ == "__main__":
