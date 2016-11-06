@@ -1,9 +1,15 @@
+#
+# Correspondence between L values and absorption for a revised manuscript.
+#
+
 import csv
 import os
 from image_tools import get_cie_rois
 import matplotlib.pyplot as plt
-from measure_calibration_lab import read_csv,mk_cells
+from measure_calibration_lab import read_csv, mk_cells
 
+
+# Get absorbance at `wl` nm wavelength from .txt data file.
 def get_abs(path, wl):
     v = None
     with open(path) as f:
@@ -32,14 +38,14 @@ def main():
         sample_rois = [map(float, r)[1:] for r in reader]
     crs = read_csv('parameters/20161101/calibration rois.csv')
     calibration_rois = []
-    for k,v in crs.iteritems():
+    for k, v in crs.iteritems():
         calibration_rois.append(v[0])
     ls = []
-    for path, sample_roi, cal_roi in zip(img_paths, sample_rois,calibration_rois):
+    for path, sample_roi, cal_roi in zip(img_paths, sample_rois, calibration_rois):
         r = get_cie_rois(path, [sample_roi])[0, 0]
         cells = mk_cells(cal_roi)
         ls2 = get_cie_rois(path, map(lambda cell: cell.values(), cells))
-        print(r,cal_roi)
+        print(r, cal_roi)
         ls.append(r)
     print(abs_570)
     print(ls)
