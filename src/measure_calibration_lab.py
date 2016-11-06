@@ -208,6 +208,7 @@ def main():
     img = np.zeros((240, 1000, 3))
     line_counts = []
     lss = []
+    slices = []
     for k, rois in roiss.iteritems():
         path = get_image_path(movie_names[int(k)], 1)
         cellss = map(mk_cells, rois)
@@ -217,6 +218,7 @@ def main():
         for cells in cellss:
             ls = get_cie_rois(path, map(lambda cell: cell.values(), cells))
             # print(ls[:, 0])
+            slices.append(k)  # slices has 1-based index of image.
             lss.append(ls[:, 0])
             if np.isnan(ls[0, 0]):
                 print('NaN', movie_names[int(k)], cells)
@@ -237,7 +239,7 @@ def main():
     # plt.imshow(img)
     # plt.show()
     lss = np.array(lss).transpose()
-    l_mean = np.mean(lss,axis=1)
+    l_mean = np.mean(lss, axis=1)
     chart_order = [i[0] for i in sorted(enumerate(l_mean), key=lambda x: x[1])]
     lss2 = np.zeros((len(chart_order), lss.shape[1]))
     for i in range(lss.shape[1]):
@@ -245,7 +247,7 @@ def main():
         # lss2[:, i] /= lss2[10, i]
     plt.plot(lss)
     plt.show()
-    np.savetxt('data/kinetics/20161013 calibration l values.csv',lss.transpose())
+    np.savetxt('data/kinetics/20161013 calibration l values.csv', np.concatenate(([slices], lss)).transpose())
     # plt.plot(ordered_chart_values, linewidth=3)
     plt.plot(lss2)
     plt.show()

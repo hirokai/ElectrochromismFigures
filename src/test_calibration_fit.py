@@ -9,11 +9,11 @@ from util import sort_with_order
 def correct_cielab(in_csv, scale_csv, out_csv):
     with open(in_csv) as f:
         reader = csv.reader(f)
-        vs = np.array([map(float,r) for r in reader])
+        vs = np.array([map(float, r) for r in reader])
     with open(scale_csv) as f:
         reader = csv.reader(f)
-        ss = np.array([map(float,r) for r in reader]).flatten()
-    print(np.prod([vs,ss]))
+        ss = np.array([map(float, r) for r in reader]).flatten()
+    print(np.prod([vs, ss]))
     return
 
 
@@ -56,6 +56,8 @@ def main():
     with open('data/kinetics/20161013 calibration l values.csv') as f:
         reader = csv.reader(f, delimiter=' ')
         vs = np.array([map(float, r) for r in reader])
+        idxs = map(int, vs[:, 0])
+        vs = vs[:, 1:]
 
     v_totals = []
     for ref in range(0, vs.shape[0]):
@@ -71,14 +73,14 @@ def main():
     ks, rs, _ = optimize_with_ref(vs, res[0][0])
     plt.plot(rs.transpose(), alpha=0.7)
     print(ks)
-    np.savetxt('data/kinetics/20161013 calibration scale.txt', ks)
+    np.savetxt('data/kinetics/20161013 calibration scale.csv', np.array([idxs, ks]).transpose())
     plt.show()
     # Plot: Scaling by worst fitting
     _, rs2, _ = optimize_with_ref(vs, res[-1][0])
     plt.plot(rs2.transpose(), alpha=0.7)
     plt.show()
     plt.plot(ks)
-    plt.ylim([0,1.5])
+    plt.ylim([0, 1.5])
     plt.show()
 
     sort_and_plot(rs)
