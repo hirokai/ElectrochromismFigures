@@ -6,14 +6,17 @@ import os
 from util import sort_with_order
 
 
-def calc_calibration_scales(vs,debug=False):
-    res = find_best_fitting(vs)
+def calc_calibration_scales(all_vs, vs, debug=False):
+    res = find_best_fitting(all_vs)
 
     # Plot: Scaling by best fitting
-    ks, rs, _ = optimize_with_ref(vs, res[0][0])
+    ks, rs, _ = optimize_with_vref(vs, all_vs[res[0][0],:])
 
     if debug:
+        # plt.plot(all_vs.transpose())
+        # plt.show()
         plt.plot(rs.transpose(), alpha=0.7)
+        plt.title('calc_calibration_scales()')
         plt.show()
     return ks
 
@@ -35,6 +38,27 @@ def scaled(vs, ref, num):
         return np.sum(np.square(ds))
 
     return func
+
+
+def scaled2(vs, v_ref, num):
+    def func(k):
+        ds = v_ref - k * vs[num, :]
+        return np.sum(np.square(ds))
+
+    return func
+
+
+def optimize_with_vref(vs, v_ref):
+    v_total = 0
+    rs = np.zeros(vs.shape)
+    ks = np.zeros(vs.shape[0])
+    for i in range(0, vs.shape[0]):
+        k, v, _, _ = optimize.brent(scaled2(vs, v_ref, i), full_output=True)
+        rs[i, :] = vs[i, :] * k
+        ks[i] = k
+        v_total += v
+    # print(k,v)
+    return ks, rs, v_total
 
 
 def optimize_with_ref(vs, ref):

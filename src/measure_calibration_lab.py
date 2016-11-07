@@ -97,7 +97,7 @@ def get_image_path(folder, num):
     return os.path.join(folder, 'out%04d.png' % num)
 
 
-def mk_cells(ps):
+def mk_cells(ps,s=4.0):
     # Two vectors
     x0 = ps[0][0]
     y0 = ps[0][1]
@@ -108,7 +108,6 @@ def mk_cells(ps):
 
     cells = []
     w = 0.1  # width ratio
-    s = 4.0
     for ai in range(4):
         for bi in range(6):
             cells.append(
@@ -174,9 +173,9 @@ def mk_rgb_column(labs):
     return rgb
 
 
-def measure_color_chart(path, rois, debug_drawcells=False):
+def measure_color_chart(path, rois, cell_width=4.0, debug_drawcells=False):
     # There are 24 cells for each ROI of color chart.
-    cellss = map(mk_cells, rois)
+    cellss = map(lambda roi: mk_cells(roi, s=cell_width), rois)
 
     if debug_drawcells:
         # Draw 24 cells for measurement.
