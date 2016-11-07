@@ -10,6 +10,7 @@ from measure_calibration_lab import read_csv, mk_cells, measure_color_chart
 import numpy as np
 import luigi
 from luigi_tools import cleanup
+from test_calibration_fit import calc_calibration_scales
 
 
 # Get absorbance at `wl` nm wavelength from .txt data file.
@@ -90,13 +91,14 @@ def plot_all(sample_path, cal_path, abs_path, out_path):
         os.makedirs(out_folder)
 
     from numpy import genfromtxt
-    abs_570 = genfromtxt(abs_path, delimiter=',')[1:,1]
-    ls = genfromtxt(sample_path, delimiter=',')[1:,1]
+    abs_570 = genfromtxt(abs_path, delimiter=',')[1:, 1]
+    ls = genfromtxt(sample_path, delimiter=',')[1:, 1]
 
-    cs = genfromtxt(cal_path, delimiter=',')[1:,1:]
-    print(cs)
+    cs = genfromtxt(cal_path, delimiter=',')[1:, 1:]
+    ks = calc_calibration_scales(cs, debug=True)
 
-    plt.scatter(abs_570, ls)
+    # plt.scatter(abs_570, ls, c='gray')
+    plt.scatter(abs_570, ls * ks, c='b')
     plt.savefig(out_path)
     plt.show()
 
