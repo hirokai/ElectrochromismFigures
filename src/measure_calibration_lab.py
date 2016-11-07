@@ -69,30 +69,8 @@ def read_csv(csv_path):
 
 
 # McBeth color chart values from Wikipedia.
-chart_colors_str = """735244
-c29682
-627a9d
-576c43
-8580b1
-67bdaa
-d67e2c
-505ba6
-c15a63
-5e3c6c
-9dbc40
-e0a32e
-383d96
-469449
-af363c
-e7c71f
-bb5695
-0885a1
-f3f3f2
-c8c8c8
-a0a0a0
-7a7a79
-555555
-343434"""
+chart_colors_str = """735244 c29682 627a9d 576c43 8580b1 67bdaa d67e2c 505ba6 c15a63 5e3c6c 9dbc40 e0a32e """ + \
+                   """383d96 469449 af363c e7c71f bb5695 0885a1 f3f3f2 c8c8c8 a0a0a0 7a7a79 555555 343434"""
 
 
 def extract_l_from_str(s):
@@ -105,7 +83,7 @@ def extract_l_from_str(s):
     return lab[0, 0, 0]
 
 
-chart_l_values = map(extract_l_from_str, chart_colors_str.split("\n"))
+chart_l_values = map(extract_l_from_str, chart_colors_str.split(" "))
 
 
 def sort_with_order(vs, order):
@@ -196,8 +174,29 @@ def mk_rgb_column(labs):
     return rgb
 
 
+def measure_color_chart(path, rois, debug_drawcells=False):
+    # There are 24 cells for each ROI of color chart.
+    cellss = map(mk_cells, rois)
+
+    if debug_drawcells:
+        # Draw 24 cells for measurement.
+        print(zip(rois, cellss))
+        img2 = io.imread(path)
+        draw_cells(cellss, img2)
+
+    labss = []
+
+    for cells in cellss:
+        # Collect 24 mean (L,a,b) values of each of 24 cells.
+        labs = get_cie_rois(path, map(lambda cell: cell.values(), cells))
+        labss.append(labs)
+
+    return labss
+
+
 # Measure L values from ROIs of 24 cells of the color chart for each image.
-def process(movie_list_path, roi_path, out_path, debug_drawcells=False, debug_show_samples=False):
+def process_movies_first_frame(movie_list_path, roi_path, out_path, debug_drawcells=False, debug_show_samples=False,
+                               debug_show_l_plots=False):
     with open(movie_list_path) as f:
         reader = csv.reader(f)
         reader.next()
@@ -212,45 +211,38 @@ def process(movie_list_path, roi_path, out_path, debug_drawcells=False, debug_sh
     print(list(enumerate(chart_order)))
     # plt.plot(chart_l_values, marker='o')
     # plt.show()
-    # ordered_chart_values = sort_with_order(chart_l_values, chart_order)
+    ordered_chart_values = sort_with_order(chart_l_values, chart_order)
     # plt.plot(ordered_chart_values, marker='o')
     # plt.show()
 
     roiss = read_csv(roi_path)
     count_rois = len(reduce(lambda a, b: a + b, roiss.values()))
     if debug_show_samples:
-        img_samples = np.zeros((10 * 24, 10 * count_rois, 3))  # for
+        img_samples = np.zeros((10 * 24, 10 * count_rois, 3))  # for Lab samples
     count = 0
     line_counts = []  # Will be used for vertical lines between images.
     lss = []
     slices = []
+    movie_name_per_slice = []
     for k, rois in roiss.iteritems():
         sys.stdout.write('.')
         sys.stdout.flush()
         path = get_image_path(movie_folder[int(k) - 1], 1)
 
-        # There are 24 cells for each ROI of color chart.
-        cellss = map(mk_cells, rois)
+        # Collect 24 mean (L,a,b) values of each of 24 cells.
+        labss = measure_color_chart(path, rois, debug_drawcells=debug_drawcells)
 
-        if debug_drawcells:
-            # Draw 24 cells for measurement.
-            print(zip(rois, cellss))
-            img2 = io.imread(path)
-            draw_cells(cellss, img2, count)
-
-        for cells in cellss:
-            # Collect 24 mean (L,a,b) values of each of 24 cells.
-            labs = get_cie_rois(path, map(lambda cell: cell.values(), cells))
+        for labs in labss:
             slices.append(k)  # slices has 1-based index of image.
             lss.append(labs[:, 0])
             if np.isnan(labs[0, 0]):
-                print('NaN', movie_names[int(k) - 1], cells)
+                raise ValueError("NaN in Lab measurement.")
             if debug_show_samples:
                 img_samples[:, (count * 10):(count * 10 + 10), :] = mk_rgb_column(labs)
+            movie_name_per_slice.append(movie_names[len(line_counts)])
             count += 1
-            # if count >= 5:
-            #     break
         line_counts.append(count)
+
     sys.stdout.write('\n')
     if debug_show_samples:
         # Draw vertical lines in sample image between different source images.
@@ -262,14 +254,20 @@ def process(movie_list_path, roi_path, out_path, debug_drawcells=False, debug_sh
     l_mean = np.mean(lss, axis=1)
     chart_order = [i[0] for i in sorted(enumerate(l_mean), key=lambda x: x[1])]
     lss2 = np.zeros((len(chart_order), lss.shape[1]))
-    np.savetxt(out_path, np.concatenate(([slices], lss)).transpose())
+    print(out_path)
+    with open(out_path, 'wb') as f:
+        writer = csv.writer(f)
+        writer.writerow(['movie_name', 'slice'] + ['L%d' % i for i in range(1, 25)])
+        for i, ls in enumerate(lss.transpose()):
+            writer.writerow([movie_name_per_slice[i],1] + list(map(lambda l: ('%03.4f' % l).rjust(8), ls)))
     # plt.plot(lss)
     # plt.show()
-    for i in range(lss.shape[1]):
-        lss2[:, i] = sort_with_order(lss[:, i], chart_order)
-    # plt.plot(ordered_chart_values, linewidth=3)
-    # plt.plot(lss2)
-    # plt.show()
+    if debug_show_l_plots:
+        plt.plot(ordered_chart_values, linewidth=3)
+        for i in range(lss.shape[1]):
+            lss2[:, i] = sort_with_order(lss[:, i], chart_order)
+            plt.plot(lss2)
+            plt.show()
 
 
 class MeasureLValuesOfColorCharts(luigi.Task):
@@ -278,7 +276,7 @@ class MeasureLValuesOfColorCharts(luigi.Task):
 
     def run(self):
         movie_list_path = os.path.join('parameters/', self.name, 'movie_list.csv')
-        process(movie_list_path, self.roipath, self.output().path,debug_show_samples=True)
+        process_movies_first_frame(movie_list_path, self.roipath, self.output().path, debug_show_samples=False)
 
     def output(self):
         return luigi.LocalTarget('data/kinetics/' + str(self.name) + ' calibration l values.csv')
