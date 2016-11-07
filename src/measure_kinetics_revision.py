@@ -73,15 +73,16 @@ def read_rois(path):
     return obj
 
 
-def all_measure_cielab(folder, roi_path, out_path):
+def all_measure_cielab(folder, roi_path, out_path, max_timepoints=1000):
     folder_slices = os.path.join(folder, 'slices')
     folders = sorted(filter(lambda n: os.path.isdir(os.path.join(folder_slices, n)), os.listdir(folder_slices)))
     rois = read_rois(roi_path)
     print(sorted(rois.keys()), folders)
     lsss = []
-    max_timepoints = 1000
+    print(rois)
     for f in folders:
         num = f[4:8]
+        print(num)
         fp = os.path.join(folder_slices, f)
         lss = measure_movie_slices(fp, rois.get(num), max_timepoints=max_timepoints)
         lsss.append(lss)
@@ -89,6 +90,9 @@ def all_measure_cielab(folder, roi_path, out_path):
     print(result.shape)
     result = np.reshape(result, (max_timepoints, len(folders) * 3))
     print(result.shape)
+    out_folder = os.path.dirname(out_path)
+    if not os.path.exists(out_folder):
+        os.makedirs(out_folder)
     np.savetxt(out_path, result, delimiter=",")
 
 
@@ -248,8 +252,8 @@ class CorrectedLValues(luigi.Task):
 
     def run(self):
         correct_cielab_stub(self.input().path,
-                       os.path.join('data', 'kinetics', '%s calibration scale.txt' % self.name),
-                       self.output().path)
+                            os.path.join('data', 'kinetics', '%s calibration scale.txt' % self.name),
+                            self.output().path)
 
 
 class OrganizeAndPlotData(luigi.Task):
