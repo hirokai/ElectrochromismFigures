@@ -1,4 +1,5 @@
 import os
+import shutil
 
 
 def cleanup(task):
@@ -6,10 +7,16 @@ def cleanup(task):
         outs = task.output()
         if isinstance(outs, list):
             for o in outs:
-                os.remove(o.path)
+                if os.path.isdir(o.path):
+                    shutil.rmtree(o.path)
+                else:
+                    os.remove(o.path)
         elif isinstance(outs, dict):
             for key, value in outs.iteritems():
-                os.remove(value.path)
+                if os.path.isdir(value.path):
+                    shutil.rmtree(value.path)
+                else:
+                    os.remove(value.path)
         else:
             os.remove(outs.path)
     except OSError as e:

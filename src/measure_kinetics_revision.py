@@ -13,6 +13,8 @@ from util import ensure_exists, basename_noext
 from image_tools import get_cie_l_rois
 from test_calibration_fit import correct_cielab
 import luigi
+from luigi_tools import cleanup
+import shutil
 
 folder = '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/'
 names_path = ''
@@ -157,8 +159,8 @@ def print_fit(ts, ys, c):
         ts_fit_plot = np.linspace(fit_start, 45, 100)
         ys_fit_plot = first_order(ts_fit_plot, *popt)
         plt.plot(ts_fit_plot, ys_fit_plot, c=c, lw=1)
-    except:
-        pass
+    except RuntimeError as e:
+        print('Fitting failed.')
 
 
 def plot_split_traces(dat, sample_names, save_folder=None):
@@ -287,6 +289,12 @@ class MeasureAndPlotAll(luigi.WrapperTask):
 
 def main():
     os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
+    # folders = {'20161013': '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/',
+    #            '20161019': '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/'}
+    # tasks = [OrganizeAndPlotData(name=k, folder=v) for k, v in folders.iteritems()]
+    # for t in tasks:
+    #     cleanup(t)
+    shutil.rmtree('dist/kinetics_revision')
     luigi.run(['MeasureAndPlotAll'])
 
 
