@@ -76,7 +76,7 @@ def split_trace(ts_o, ys_o, split_t):
     for i in range(len(tis) - 1):
         ts_s.append(ts[tis[i]:tis[i + 1]])
         ys_s.append(ys[tis[i]:tis[i + 1]])
-    return ts_s, ys_s
+    return filter(lambda a: a.size != 0, ts_s), filter(lambda a: a.size != 0, ys_s)
 
 
 #

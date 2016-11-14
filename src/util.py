@@ -20,6 +20,12 @@ def ensure_exists(folder):
         os.makedirs(folder)
 
 
+def ensure_folder_exists(path):
+    folder = os.path.dirname(path)
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+
 def basename_noext(path):
     return os.path.splitext(os.path.basename(path))[0]
 

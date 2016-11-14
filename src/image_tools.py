@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import scipy.stats
 
+
 def get_cie_roi(path, roi):
     rgb = io.imread(path)[roi[1]:roi[1] + roi[3], roi[0]:roi[0] + roi[2], :]
     lab = color.rgb2lab(rgb)
