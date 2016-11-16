@@ -12,6 +12,7 @@ class MakeSlicesStub(luigi.Task):
 
 
 def mk_slices(path):
+    assert os.path.isfile(path)
     base_folder = os.path.dirname(path)
     slices_base_folder = os.path.join(base_folder, 'slices')
     ensure_exists(slices_base_folder)
