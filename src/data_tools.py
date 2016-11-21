@@ -30,7 +30,7 @@ def save_csv(path, rows):
             writer.writerow(map(str, row))
 
 
-def load_csv(path, skip_rows=0):
+def load_csv(path, skip_rows=0,numpy=False):
     import csv
 
     def may_float(s):
@@ -43,7 +43,11 @@ def load_csv(path, skip_rows=0):
         reader = csv.reader(f)
         for _ in range(skip_rows):
             reader.next()
-        return [row for row in reader]
+        r = [row for row in reader]
+        if numpy:
+            return np.array(r).astype(np.float)
+        else:
+            return r
 
 
 #
