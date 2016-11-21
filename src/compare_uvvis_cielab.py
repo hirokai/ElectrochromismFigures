@@ -6,11 +6,11 @@ import csv
 import os
 from image_tools import get_cie_rois
 import matplotlib.pyplot as plt
-from measure_calibration_lab import read_csv, mk_cells, measure_color_chart
+from measure_colorchart import read_csv, mk_cells, measure_color_chart
 import numpy as np
 import luigi
 from luigi_tools import cleanup
-from test_calibration_fit import calc_calibration_scales
+from test_calibration import calc_calibration_scales
 import seaborn as sns
 
 

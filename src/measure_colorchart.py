@@ -10,6 +10,8 @@ from skimage import color
 import luigi
 from luigi_tools import cleanup
 import sys
+from util import basename_noext, ensure_folder_exists
+import shutil
 
 
 class RectROI:
@@ -93,11 +95,11 @@ def sort_with_order(vs, order):
     return r
 
 
-def get_image_path(folder, num):
-    return os.path.join(folder, 'out%04d.png' % num)
+def get_image_path(root_folder, name, num):
+    return os.path.join(root_folder, 'slices', basename_noext(name), 'out%04d.png' % num)
 
 
-def mk_cells(ps,s=4.0):
+def mk_cells(ps, s=4.0):
     # Two vectors
     x0 = ps[0][0]
     y0 = ps[0][1]
@@ -194,20 +196,19 @@ def measure_color_chart(path, rois, cell_width=4.0, debug_drawcells=False):
 
 
 # Measure L values from ROIs of 24 cells of the color chart for each image.
-def process_movies_first_frame(movie_list_path, roi_path, out_path, debug_drawcells=False, debug_show_samples=False,
-                               debug_show_l_plots=False):
-    with open(movie_list_path) as f:
+def process_movies(root_folder, movie_conditions_path, roi_path, out_folder, slice_nums=[1],
+                   debug_show_samples=False,
+                   debug_show_l_plots=False):
+    with open(movie_conditions_path) as f:
         reader = csv.reader(f)
         reader.next()
         rows = [r for r in reader]
         movie_names = [r[0] for r in rows]
-        movie_folder = [r[1] for r in rows]
 
     os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
 
-    # chart_order = [23, 12, 9, 22, 0, 14, 7, 3, 21, 17, 16, 6, 5, 10, 15, 18]
     chart_order = [i[0] for i in sorted(enumerate(chart_l_values), key=lambda x: x[1])]
-    print(list(enumerate(chart_order)))
+    # print(list(enumerate(chart_order)))
     # plt.plot(chart_l_values, marker='o')
     # plt.show()
     ordered_chart_values = sort_with_order(chart_l_values, chart_order)
@@ -220,72 +221,98 @@ def process_movies_first_frame(movie_list_path, roi_path, out_path, debug_drawce
         img_samples = np.zeros((10 * 24, 10 * count_rois, 3))  # for Lab samples
     count = 0
     line_counts = []  # Will be used for vertical lines between images.
-    lss = []
     slices = []
     movie_name_per_slice = []
+
+    if not slice_nums:  # If empty.
+        slice_nums = range(1, 10000)  # Sufficiently large number
+
+    # Loop over movies.
     for k, rois in roiss.iteritems():
-        sys.stdout.write('.')
-        sys.stdout.flush()
-        path = get_image_path(movie_folder[int(k) - 1], 1)
+        sys.stdout.write('Processing: %s ' % movie_names[int(k) - 1])
+        roi_idxs = []
+        nums = []
+        lss = []
 
-        # Collect 24 mean (L,a,b) values of each of 24 cells.
-        labss = measure_color_chart(path, rois, debug_drawcells=debug_drawcells)
+        result = []
+        for _ in range(len(rois)):
+            result.append([])
+        # Loop over slices of the movie.
+        for slice_count, slice_num in enumerate(slice_nums):
+            if slice_count % 10 == 0:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+            path = get_image_path(root_folder, movie_names[int(k) - 1], slice_num)
+            if not os.path.exists(path):
+                break
 
-        for labs in labss:
-            slices.append(k)  # slices has 1-based index of image.
-            lss.append(labs[:, 0])
-            if np.isnan(labs[0, 0]):
-                raise ValueError("NaN in Lab measurement.")
-            if debug_show_samples:
-                img_samples[:, (count * 10):(count * 10 + 10), :] = mk_rgb_column(labs)
-            movie_name_per_slice.append(movie_names[len(line_counts)])
-            count += 1
-        line_counts.append(count)
+            # Collect 24 mean (L,a,b) values of each of 24 cells, possibly for multiple ROIs.
+            labss = measure_color_chart(path, rois)
 
-    sys.stdout.write('\n')
-    if debug_show_samples:
-        # Draw vertical lines in sample image between different source images.
-        for i in line_counts:
-            img_samples[:, i * 10 - 1, :] = 1
-        plt.imshow(img_samples)
-        plt.show()
-    lss = np.array(lss).transpose()
-    l_mean = np.mean(lss, axis=1)
-    chart_order = [i[0] for i in sorted(enumerate(l_mean), key=lambda x: x[1])]
-    lss2 = np.zeros((len(chart_order), lss.shape[1]))
-    print(out_path)
-    with open(out_path, 'wb') as f:
-        writer = csv.writer(f)
-        writer.writerow(['movie_name', 'slice'] + ['L%d' % i for i in range(1, 25)])
-        for i, ls in enumerate(lss.transpose()):
-            writer.writerow([movie_name_per_slice[i],1] + list(map(lambda l: ('%03.4f' % l).rjust(8), ls)))
-    # plt.plot(lss)
-    # plt.show()
-    if debug_show_l_plots:
-        plt.plot(ordered_chart_values, linewidth=3)
-        for i in range(lss.shape[1]):
-            lss2[:, i] = sort_with_order(lss[:, i], chart_order)
-            plt.plot(lss2)
-            plt.show()
+            roi_idx = 1
+            for labs in labss:
+                slices.append(k)  # slices has 1-based index of image.
+                lss.append(labs[:, 0])
+                result[roi_idx - 1].append(labs[:, 0])
+                nums.append(slice_num)
+                roi_idxs.append(roi_idx)
+                if np.isnan(labs[0, 0]):
+                    raise ValueError("NaN in Lab measurement.")
+                if debug_show_samples:
+                    img_samples[:, (count * 10):(count * 10 + 10), :] = mk_rgb_column(labs)
+                movie_name_per_slice.append(movie_names[len(line_counts)])
+                count += 1
+                roi_idx += 1
+        lss = np.array(lss)
+        l_mean = np.mean(lss, axis=0)
+        chart_order = [i[0] for i in sorted(enumerate(l_mean), key=lambda x: x[1])]
+        lss2 = np.zeros((len(chart_order), lss.shape[0]))
+        if debug_show_l_plots:
+            plt.plot(ordered_chart_values, linewidth=3)
+            for i in range(lss.shape[1]):
+                lss2[:, i] = sort_with_order(lss[:, i], chart_order)
+                plt.plot(lss2)
+                plt.show()
+        for roi_idx in range(len(result)):
+            m = basename_noext(movie_names[int(k) - 1])
+            out_path = os.path.join(out_folder, "%s_%d.csv" % (m,roi_idx+1))
+            ensure_folder_exists(out_path)
+            with open(out_path, 'wb') as f:
+                writer = csv.writer(f)
+                writer.writerow(['movie_name', 'movie_slice', 'roi_index'] + ['L%d' % i for i in range(1, 25)])
+                for slice_idx, ls in enumerate(result[roi_idx]):
+                    writer.writerow(
+                        [movie_name_per_slice[slice_idx], '%04d' % (slice_idx + 1), '%d' % (roi_idx + 1)] +
+                        list(map(lambda l: ('%03.4f' % l).rjust(8), ls))
+                    )
+        sys.stdout.write('\n')
 
 
 class MeasureLValuesOfColorCharts(luigi.Task):
     name = luigi.Parameter()
+    folder = luigi.Parameter()
     roipath = luigi.Parameter()
 
     def run(self):
-        movie_list_path = os.path.join('parameters/', self.name, 'movie_list.csv')
-        process_movies_first_frame(movie_list_path, self.roipath, self.output().path, debug_show_samples=False)
+        movie_condition_path = os.path.join('parameters', self.name, 'movie_conditions.csv')
+        out_path = os.path.join(self.output().path)
+        print('Output: ' + out_path)
+        process_movies(self.folder, movie_condition_path, self.roipath, out_path,
+                       slice_nums=[],  # All frames
+                       debug_show_samples=False)
 
     def output(self):
-        return luigi.LocalTarget('data/kinetics/' + str(self.name) + ' calibration l values.csv')
+        # Folders
+        return luigi.LocalTarget(os.path.join('data', 'kinetics', 'colorchart', str(self.name)))
 
 
 def main():
     os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
-    cleanup(MeasureLValuesOfColorCharts(name='20161019', roipath='parameters/20161019/calibration_rois.csv'))
+    # shutil.rmtree(os.path.join('data', 'kinetics', 'colorchart', '20161013'), ignore_errors=True)
     luigi.run(
-        ['MeasureLValuesOfColorCharts', '--name', '20161019', '--roipath', 'parameters/20161019/calibration_rois.csv'])
+        ['MeasureLValuesOfColorCharts', '--name', '20161019',
+         '--folder', '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/',
+         '--roipath', 'parameters/20161019/calibration_rois.csv'])
 
 
 if __name__ == "__main__":

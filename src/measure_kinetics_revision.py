@@ -3,7 +3,7 @@ import csv
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from data_tools import colors10, split_trace, load_csv
+from data_tools import colors10, split_trace, load_csv, save_csv
 from scipy.optimize import curve_fit
 from util import ensure_exists, ensure_folder_exists, basename_noext, bcolors
 from image_tools import get_cie_l_rois
@@ -14,6 +14,7 @@ from make_slices import mk_slices
 import unittest
 from luigi_tools import cleanup
 import itertools
+from measure_colorchart import MeasureLValuesOfColorCharts
 
 
 #
@@ -207,12 +208,18 @@ class RawLValuesOfAllMovies(luigi.Task):
 # Correction by color chart
 #
 
-def correct_cielab_stub(in_csvs, out_csvs):
-    import shutil
-    print(in_csvs, out_csvs)
-    for f1, f2 in zip(in_csvs, out_csvs):
-        ensure_folder_exists(f2.path)
-        shutil.copyfile(f1.path, f2.path)
+def correct_cielab(in_csvs, correction_csvs, out_csvs):
+    assert all([isinstance(a, luigi.LocalTarget) for a in in_csvs])
+    assert all([os.path.isfile(a) for a in correction_csvs])
+    assert all([isinstance(a, luigi.LocalTarget) for a in out_csvs])
+
+    for f1, p2, f3 in zip(in_csvs, correction_csvs, out_csvs):
+        # print(f1.path,p2,f3.path)
+        factor = load_csv(p2,numpy=True)[:,1]
+        raw = load_csv(f1.path,numpy=True)[0:len(factor),:]
+        corrected = raw.transpose() * np.repeat([factor],3,axis=0)
+        ensure_folder_exists(f3.path)
+        save_csv(f3.path,np.transpose(corrected))
 
 
 class CorrectedLValuesOfAllMovies(luigi.Task):
@@ -220,7 +227,11 @@ class CorrectedLValuesOfAllMovies(luigi.Task):
     folder = luigi.Parameter()
 
     def requires(self):
-        return RawLValuesOfAllMovies(name=self.name, folder=self.folder)
+        return [RawLValuesOfAllMovies(name=self.name, folder=self.folder),
+                MeasureLValuesOfColorCharts(name=self.name,
+                                            folder=self.folder,
+                                            roipath=os.path.join('parameters', self.name, 'calibration_rois.csv'))
+                ]
 
     def output(self):
         names = os.listdir(os.path.join('data', 'kinetics', 'raw', self.name))
@@ -229,9 +240,9 @@ class CorrectedLValuesOfAllMovies(luigi.Task):
                 in names]
 
     def run(self):
-        # FIXME: Stub
-        correct_cielab_stub(self.input(),
-                            self.output())
+        base_folder = os.path.join('data','kinetics','correction',self.name)
+        correction_value_csvs = [os.path.join(base_folder, n) for n in os.listdir(base_folder) if n.find('_1.csv') != -1]
+        correct_cielab(self.input()[0], correction_value_csvs, self.output())
 
 
 #
@@ -356,16 +367,16 @@ def split_all_traces(in_csvs, movie_conditions_csv, sample_conditions_csv):
     movie_num = 1
     for in_csv, movie_cond in zip(in_csvs, movie_conditions):
         vss = load_csv(in_csv, 0, numpy=True)
-        assert vss.shape[1] == len(movie_cond['samples'])
+        assert vss.shape[1] == len(movie_cond['samples']), (in_csv, movie_cond['samples'])
         mode = movie_cond['mode']
+        print(vss.shape)
         for sample_num, vs in zip(movie_cond['samples'], vss.T):
-            vs2 = remove_trailing_zeros(vs)
             cond = sample_conditions[sample_num - 1]
             pedot = cond['pedot']
             rpm = cond['rpm']
             # Triple of (mode, pedot, rpm) uniquely identifies the sample in the set of movies.
-            t = range(len(vs2))
-            split_for_mode(res, t, vs2, mode, pedot, rpm)
+            t = range(len(vs))
+            split_for_mode(res, t, vs, mode, pedot, rpm)
         movie_num += 1
     return res
 
@@ -400,7 +411,7 @@ def read_all_split_traces(path):
 
 
 #
-# First-oder fitting.
+# First-order fitting.
 #
 
 
@@ -581,7 +592,13 @@ class TestKineticsAll(unittest.TestCase):
     def test_RawLValuesOfAllMovies(self):
         # shutil.rmtree('data/kinetics/raw/20161013', ignore_errors=True)
         # shutil.rmtree('data/kinetics/raw/20161013 all_l_values.csv', ignore_errors=True)
-        r = luigi.run(['RawLValuesOfAllMovies', '--name', '20161013', '--folder',
+        r = luigi.run(['RawLValuesOfAllMovies', '--name', '20161019', '--folder',
+                       '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/', '--workers', '4', '--no-lock'])
+        self.assertTrue(r)
+
+    def test_CorrectedLValuesOfAllMovies(self):
+        # shutil.rmtree('data/kinetics/corrected', ignore_errors=True)
+        r = luigi.run(['CorrectedLValuesOfAllMovies', '--name', '20161013', '--folder',
                        '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/', '--workers', '4', '--no-lock'])
         self.assertTrue(r)
 
@@ -590,6 +607,13 @@ class TestKineticsAll(unittest.TestCase):
         r = luigi.run(['SplitAllTraces', '--name', '20161013', '--folder',
                        '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/', '--workers', '4', '--no-lock'])
         self.assertTrue(r)
+
+    def test_SplitAllTraces2(self):
+        shutil.rmtree('data/kinetics/split', ignore_errors=True)
+        r = luigi.run(['SplitAllTraces', '--name', '20161019', '--folder',
+                       '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/', '--workers', '4', '--no-lock'])
+        self.assertTrue(r)
+
 
     # def test_PlotSingleKineticsData(self):
     #     shutil.rmtree('data/kinetics/split', ignore_errors=True)
