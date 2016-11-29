@@ -215,11 +215,11 @@ def correct_cielab(in_csvs, correction_csvs, out_csvs):
 
     for f1, p2, f3 in zip(in_csvs, correction_csvs, out_csvs):
         # print(f1.path,p2,f3.path)
-        factor = load_csv(p2,numpy=True)[:,1]
-        raw = load_csv(f1.path,numpy=True)[0:len(factor),:]
-        corrected = raw.transpose() * np.repeat([factor],3,axis=0)
+        factor = load_csv(p2, numpy=True)[:, 1]
+        raw = load_csv(f1.path, numpy=True)[0:len(factor), :]
+        corrected = raw.transpose() * np.repeat([factor], 3, axis=0)
         ensure_folder_exists(f3.path)
-        save_csv(f3.path,np.transpose(corrected))
+        save_csv(f3.path, np.transpose(corrected))
 
 
 class CorrectedLValuesOfAllMovies(luigi.Task):
@@ -240,8 +240,9 @@ class CorrectedLValuesOfAllMovies(luigi.Task):
                 in names]
 
     def run(self):
-        base_folder = os.path.join('data','kinetics','correction',self.name)
-        correction_value_csvs = [os.path.join(base_folder, n) for n in os.listdir(base_folder) if n.find('_1.csv') != -1]
+        base_folder = os.path.join('data', 'kinetics', 'correction', self.name)
+        correction_value_csvs = [os.path.join(base_folder, n) for n in os.listdir(base_folder) if
+                                 n.find('_1.csv') != -1]
         correct_cielab(self.input()[0], correction_value_csvs, self.output())
 
 
@@ -420,26 +421,48 @@ def first_order(t, a_i, a_f, k, t0):
     return y
 
 
-def plot_fitting_curve(ts, ys, c):
+def first_order_af_fixed(a_f):
+    def func(t, a_i, k, t0):
+        y = a_i + (a_f - a_i) * (1 - np.exp(-k * (t - t0)))
+        return y
+
+    return func
+
+
+def read_manual_fitting(date, pedot, rpm, mode, voltage):
+    path = os.path.join('data', 'kinetics', 'fitted_manual', date,
+                        '%d perc PEDOT - %d rpm' % (pedot, rpm), '%s %.1f.csv' % (mode, voltage))
+    if os.path.exists(path):
+        with open(path) as f:
+            t0, kinv, li, lf = map(float, f.read().strip().split(','))
+        return [li, lf, 1.0 / kinv, t0]
+    else:
+        return None
+
+
+# Using initial guess that is entered manually.
+def plot_fitting_curve(ts, ys, c, p_initial):
     fit_start = 0
     fit_to = min(45, len(ts) - 1)
     if len(ts) <= max(fit_start, 10):
         return None
     try:
-        for k_initial in [0.1, 0.3, 0.5]:
-            popt, pcov = curve_fit(first_order, ts[fit_start:fit_to], ys[fit_start:fit_to],
-                                   [ys[fit_start], ys[-1], k_initial, 2], method='lm')
-            p_initial = [ys[fit_start], ys[fit_to], k_initial, 2]
-            perr = np.sqrt(np.diag(pcov))
-            print(perr)
-            if not np.isinf(perr[0]):
-                # ts_fit = np.linspace(fit_start, fit_to, 100)
-                ts_fit_plot = np.linspace(fit_start, 45, 100)
-                ys_fit_plot = first_order(ts_fit_plot, *popt)
-                ys_fit_plot2 = first_order(ts_fit_plot, *p_initial)
-                plt.plot(ts_fit_plot, ys_fit_plot, c=c, lw=1)
-                plt.plot(ts_fit_plot, ys_fit_plot2, c=c, lw=1, ls='--')
-        return popt
+        t0, k, ai, af = p_initial
+        popt2, pcov = curve_fit(first_order_af_fixed(af), ts[fit_start:fit_to], ys[fit_start:fit_to],
+                                [ai, k, t0], method='lm')
+        perr = np.sqrt(np.diag(pcov))
+        ai,k,t0 = popt2
+        print(p_initial, [t0,k,ai,af])
+        # ts_fit = np.linspace(fit_start, fit_to, 100)
+        ts_fit_plot = np.linspace(fit_start, 45, 100)
+        ys_fit_plot = first_order_af_fixed(af)(ts_fit_plot, *popt2)
+        # ys_fit_plot2 = first_order(ts_fit_plot, *p_initial)
+        try:
+            plt.plot(ts_fit_plot, ys_fit_plot, c=c, lw=1)
+        except:
+            pass
+        # plt.plot(ts_fit_plot, ys_fit_plot2, c=c, lw=1, ls='--')
+        return [t0,k,ai,af]
     except RuntimeError as e:
         print('Fitting failed.')
 
@@ -488,14 +511,14 @@ def plot_split_traces(dat, sample_conditions, save_folder=None):
                 ls_min = 100
                 for voltage in voltages:
                     ts, ls = dat.get_data(pedot, rpm, mode, voltage)
-                    # if mode == 'red':
-                    #     ls = np.log(ls-min(ls)+0.01)
-                    # else:
-                    #     ls = np.log(max(ls) - ls + 0.01)
-                    ls_max = max(ls_max, max(ls))
-                    ls_min = min(ls_min, min(ls))
-                    plt.scatter(ts - min(ts), ls, s=10, linewidth=0, c=colors10[count % 10])
-                    plot_fitting_curve(ts, ls, colors10[count % 10])
+                    if len(ts) > 0:
+                        ls_max = max(ls_max, max(ls))
+                        ls_min = min(ls_min, min(ls))
+                        plt.scatter(ts - min(ts), ls, s=10, linewidth=0, c=colors10[count % 10])
+                        # p_initial = read_manual_fitting("20161013", pedot, rpm, mode, voltage)
+                        # if p_initial:
+                        #     print(p_initial)
+                        #     plot_fitting_curve(ts, ls, colors10[count % 10], p_initial)
                     count += 1
                 plt.ylim([ls_min, ls_max])
                 plt.title('%s: %d%%, %d rpm' % (mode, pedot, rpm))
@@ -613,7 +636,6 @@ class TestKineticsAll(unittest.TestCase):
         r = luigi.run(['SplitAllTraces', '--name', '20161019', '--folder',
                        '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/', '--workers', '4', '--no-lock'])
         self.assertTrue(r)
-
 
     # def test_PlotSingleKineticsData(self):
     #     shutil.rmtree('data/kinetics/split', ignore_errors=True)

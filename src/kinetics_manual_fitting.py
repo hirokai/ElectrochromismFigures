@@ -7,14 +7,16 @@ import os
 import fnmatch
 
 
+# Specify conditions chosen for analysis
 def recursive_walk(folder):
     matches = []
     for root, dirnames, filenames in os.walk(folder):
         for filename in fnmatch.filter(filenames, '*.csv'):
             matches.append(os.path.join(root, filename))
-    return [m for m in matches if m.find('red') == -1 and
-            m.find('2000') != -1 and
-            not m.find('const -0.5') != -1 and
+    return [m for m in matches if m.find('red') != -1 and
+            # m.find('30 perc') != -1 and
+            # m.find('0.8') != -1 and
+            # not m.find('const -0.5') != -1 and
             not os.path.exists(get_out_path(m))]
 
 
@@ -36,7 +38,7 @@ count = 0
 def main():
     global skinv, st0, sli, slf,l_scatter,fig,ax,l,paths,count
     count = 0
-    paths = recursive_walk('../data/kinetics/split/20161019')
+    paths = recursive_walk('../data/kinetics/split/20161013')
     if not paths:
         print('No files. Quitting.')
         return
@@ -158,5 +160,6 @@ def save(event):
 def skip(event):
     next_trace()
 
+plt.interactive(False)
 
 main()
