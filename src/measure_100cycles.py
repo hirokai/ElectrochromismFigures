@@ -2,6 +2,8 @@ import os
 import luigi
 from measure_kinetics_revision import all_make_slices, all_measure_cielab
 
+# FIXME: Need to be updated to use the latest version of analysis.
+
 
 class MakeAllSlices(luigi.Task):
     folder = luigi.Parameter()
