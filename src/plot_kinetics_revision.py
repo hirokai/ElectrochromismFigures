@@ -45,7 +45,7 @@ def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], lab
         ms = ['const', 'ox', 'red']
         d = {m: dat.get_data(pedot, rpm, m, voltage) for m in ms}
     elif variable == 'voltage':
-        vs = [-0.7, -0.5, -0.3, 0.2, 0.4, 0.6, 0.8]
+        vs = [-0.5, -0.2, 0, 0.2, 0.4, 0.6, 0.8]
         d = {v: dat.get_data(pedot, rpm, mode, v) for v in vs}
     ks = sorted(d.keys())
     vs = [np.mean(d[k] or []) for k in ks]
@@ -104,8 +104,8 @@ def read_final_l():
 
     for rpm in [500, 1000, 2000, 3000, 4000, 5000]:
         for pedot in [20, 30, 40, 60, 80]:
-            read_mode('ox', [0.2, 0.4, 0.6, 0.8])
-            read_mode('red', [-0.7, -0.5, -0.3, -0.1])
+            read_mode('ox', [0, 0.2, 0.4, 0.6, 0.8])
+            read_mode('red', [-0.5, -0.2])
     return dat
 
 

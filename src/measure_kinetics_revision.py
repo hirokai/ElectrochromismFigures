@@ -339,10 +339,12 @@ def split_for_mode(res, ts, vs, mode, pedot, rpm):
 
     tss, vss = split_trace(ts, vs, range(2, 1000, 60))
 
-    voltage_dict = {  # FIXME: Check values.
+    voltage_dict = {
         'const': [0.8, -0.5, 0.8, -0.5, 0.8, -0.5],
         'ox': [0, 0.2, 0.4, 0.6, 0.8],
-        'red': [0.1, -0.1, -0.3, -0.5, -0.7]
+        # Corrected on 12/7, 2016.
+        # See 20160512 Suda EC amperometry/analysis/voltage_profile.jl
+        'red': [0.4, 0.2, 0, -0.2, -0.5]
     }
 
     voltages = voltage_dict[mode]
@@ -495,10 +497,12 @@ def plot_split_traces(dat, sample_conditions, save_folder=None):
     rpms = [500, 1000, 2000, 3000, 4000, 5000]
     pedots = [20, 30, 40]
     modes = ['const', 'ox', 'red']
-    voltage_dict = {  # FIXME: Check values.
+    voltage_dict = {
         'const': [0.8, -0.5],
         'ox': [0, 0.2, 0.4, 0.6, 0.8],
-        'red': [0.1, -0.1, -0.3, -0.5, -0.7]
+        # Corrected on 12/7, 2016.
+        # See 20160512 Suda EC amperometry/analysis/voltage_profile.jl
+        'red': [0.4, 0.2, 0, -0.2, -0.5]
     }
     for k, mode in enumerate(modes):
         plt.figure(figsize=(20, 15))
