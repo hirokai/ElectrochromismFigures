@@ -1,10 +1,12 @@
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.widgets import Slider, Button, RadioButtons
-from data_tools import load_csv, save_csv
-from util import ensure_folder_exists
-import os
 import fnmatch
+import os
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.widgets import Slider, Button, RadioButtons
+
+from src.util.data_tools import load_csv, save_csv
+from util.util import ensure_folder_exists
 
 
 # Specify conditions chosen for analysis

@@ -1,16 +1,16 @@
 import luigi
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MultipleLocator
-import csv
 import numpy as np
 import pandas as pd
-from data_tools import colors10, load_csv
-from scipy.optimize import curve_fit
-from figure_tools import plot_and_save, set_format, set_common_format
-from data_tools import split_trace
 import seaborn as sns
-from pedot_voltage_conditions import CollectCIELabStub
+from data_tools import colors10, load_csv
+from data_tools import split_trace
 from luigi_tools import cleanup
+from matplotlib.ticker import MultipleLocator
+from scipy.optimize import curve_fit
+
+from pedot_voltage_conditions import CollectCIELabStub
+from src.util.figure_tools import plot_and_save, set_format, set_common_format
 
 sns.set_style('white')
 sns.set_style("ticks")
@@ -109,6 +109,7 @@ def plot_rate_constants_pedot(path):
             count += 1
 
         plt.axis([0, 100, 0, 1])
+
     return func
 
 
@@ -182,7 +183,7 @@ class TestPlottingKinetics(luigi.WrapperTask):
 if __name__ == "__main__":
     import os
 
-    os.chdir(os.path.dirname(__file__))
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
     cleanup(PlotOxTrace(name='4a'))
-    cleanup(PlotRateConstants(name1='4c',name2='S5'))
+    cleanup(PlotRateConstants(name1='4c', name2='S5'))
     luigi.run(['TestPlottingKinetics'])

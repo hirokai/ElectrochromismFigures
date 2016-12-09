@@ -1,36 +1,14 @@
+#
+# Plotting final L values.
+#
+
 import os
-import numpy as np
+
 import matplotlib.pyplot as plt
-from data_tools import colors10
+import numpy as np
 
-
-class Kinetics:
-    def __init__(self):
-        self.dat = {}
-
-    def __repr__(self):
-        ks = self.dat.keys()
-        return '%d entries: %s' % (len(ks), ' '.join(ks))
-
-    @staticmethod
-    def mk_key(pedot, rpm, mode, voltage):
-        return '%d,%d,%s,%.1f' % (pedot, rpm, mode, voltage)
-
-    @staticmethod
-    def get_cond_from_key(k):
-        p, r, m, v = k.split(',')
-        return int(p), int(r), m, float(v)
-
-    def set_data(self, pedot, rpm, mode, voltage, v):
-        assert (pedot in [20, 30, 40, 60, 80])
-        assert (rpm in [500, 1000, 2000, 3000, 4000, 5000])
-        assert (mode in ['const', 'ox', 'red'])
-        if mode == 'ox':
-            assert voltage in [0, 0.2, 0.4, 0.6, 0.8]
-        self.dat[self.mk_key(pedot, rpm, mode, voltage)] = v
-
-    def get_data(self, pedot, rpm, mode, voltage):
-        return self.dat.get(self.mk_key(pedot, rpm, mode, voltage))
+from kinetics import Kinetics, KineticsDataType, read_kinetics
+from src.util.data_tools import colors10
 
 
 def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], label=None, show=False):
@@ -46,7 +24,10 @@ def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], lab
         d = {m: dat.get_data(pedot, rpm, m, voltage) for m in ms}
     elif variable == 'voltage':
         vs = [-0.5, -0.2, 0, 0.2, 0.4, 0.6, 0.8]
-        d = {v: dat.get_data(pedot, rpm, mode, v) for v in vs}
+        if mode:
+            d = {v: dat.get_data(pedot, rpm, mode, v) for v in vs}
+        else:
+            d = {v: dat.get_data(pedot, rpm, 'ox', v) or dat.get_data(pedot, rpm, 'red', v) for v in vs}
     ks = sorted(d.keys())
     vs = [np.mean(d[k] or []) for k in ks]
     l = [(zip([k] * 100, d[k]) or []) for k in ks if d[k] is not None]
@@ -65,54 +46,10 @@ def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], lab
             plt.show()
 
 
-def read_rate_constant():
-    dat = Kinetics()
-    for rpm in [500, 1000, 2000, 3000, 4000, 5000]:
-        for pedot in [20, 30, 40, 60, 80]:
-            for voltage in [0.2, 0.4, 0.6, 0.8]:
-                for date in ['20161013', '20161019']:
-                    path = os.path.join('data', 'kinetics', 'fitted_manual', date,
-                                        '%d perc PEDOT - %d rpm' % (pedot, rpm), 'ox %.1f.csv' % voltage)
-                    if os.path.exists(path):
-                        with open(path) as f:
-                            t0, kinv, li, lf = map(float, f.read().strip().split(','))
-                            k = 1.0 / kinv
-                            d = dat.get_data(pedot, rpm, 'ox', voltage)
-                            if d:
-                                dat.set_data(pedot, rpm, 'ox', voltage, d + [k])
-                            else:
-                                dat.set_data(pedot, rpm, 'ox', voltage, [k])
-    return dat
-
-
-def read_final_l():
-    dat = Kinetics()
-
-    def read_mode(mode, voltages):
-        for voltage in voltages:
-            for date in ['20161013', '20161019']:
-                path = os.path.join('data', 'kinetics', 'fitted_manual', date,
-                                    '%d perc PEDOT - %d rpm' % (pedot, rpm), '%s %.1f.csv' % (mode, voltage))
-                if os.path.exists(path):
-                    with open(path) as f:
-                        t0, kinv, li, lf = map(float, f.read().strip().split(','))
-                        d = dat.get_data(pedot, rpm, mode, voltage)
-                        if d:
-                            dat.set_data(pedot, rpm, mode, voltage, d + [lf])
-                        else:
-                            dat.set_data(pedot, rpm, mode, voltage, [lf])
-
-    for rpm in [500, 1000, 2000, 3000, 4000, 5000]:
-        for pedot in [20, 30, 40, 60, 80]:
-            read_mode('ox', [0, 0.2, 0.4, 0.6, 0.8])
-            read_mode('red', [-0.5, -0.2])
-    return dat
-
-
 def main():
     os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
 
-    dat = read_rate_constant()
+    dat = read_kinetics(KineticsDataType.RateConstant)
     plt.figure(figsize=(10, 10))
     for i, pedot in enumerate([20, 30, 40, 60, 80]):
         plot_series(dat,
@@ -120,7 +57,7 @@ def main():
     plt.title('Varied PEDOT and rpm, ox, 0.8 V')
     plt.legend(loc='upper right')
     plt.ylim([0, 1.2])
-    plt.close()
+    plt.show()
 
     plt.figure(figsize=(10, 10))
     for i, voltage in enumerate([0.2, 0.4, 0.6, 0.8]):
@@ -128,15 +65,13 @@ def main():
     plt.title('Varied PEDOT and voltage, ox, 2000 rpm')
     plt.ylim([0, 1.2])
     plt.legend()
-    plt.close()
+    plt.show()
 
-    dat = read_final_l()
+    dat = read_kinetics(KineticsDataType.FinalL)
     print(dat)
     plt.figure(figsize=(10, 10))
     for i, pedot in enumerate([20, 30, 40, 60, 80]):
-        plot_series(dat, 'voltage', pedot, 2000, 'ox', None, color=colors10[i], label='%d perc PEDOT' % pedot)
-    for i, pedot in enumerate([20, 30, 40, 60, 80]):
-        plot_series(dat, 'voltage', pedot, 2000, 'red', None, color=colors10[i], label='%d perc PEDOT' % pedot)
+        plot_series(dat, 'voltage', pedot, 2000, None, None, color=colors10[i], label='%d perc PEDOT' % pedot)
     plt.title('Varied PEDOT and voltage, ox, 2000 rpm')
     plt.ylabel('Final L value')
 

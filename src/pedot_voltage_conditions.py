@@ -1,12 +1,12 @@
+import csv
+
 import luigi
 import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
-from data_tools import *
-from util import *
-from scipy.optimize import curve_fit
-import csv
 from luigi_tools import cleanup
+from scipy.optimize import curve_fit
+
+from src.util.data_tools import *
 
 #
 # Parameters for curve fitting

@@ -1,20 +1,21 @@
-import os
 import csv
-import sys
-import numpy as np
-import matplotlib.pyplot as plt
-from data_tools import colors10, split_trace, load_csv, save_csv
-from scipy.optimize import curve_fit
-from util import ensure_exists, ensure_folder_exists, basename_noext, bcolors
-from image_tools import get_cie_l_rois
-import luigi
-import shutil
-import cPickle as pickle
-from make_slices import mk_slices
-import unittest
-from luigi_tools import cleanup
 import itertools
+import os
+import shutil
+import sys
+import unittest
+
+import luigi
+import matplotlib.pyplot as plt
+import numpy as np
+from util.image_tools import get_cie_l_rois
+from scipy.optimize import curve_fit
+
+from kinetics.split import SplitTraces, split_all_traces, save_split_data
+from make_slices import mk_slices
 from measure_colorchart import MeasureLValuesOfColorCharts
+from src.util.data_tools import colors10, load_csv, save_csv
+from util.util import ensure_exists, ensure_folder_exists, basename_noext, bcolors
 
 
 #
@@ -23,23 +24,6 @@ from measure_colorchart import MeasureLValuesOfColorCharts
 
 def mk_condition_name(c):
     return '%d wt%% PEDOT, %d rpm' % (c['pedot'], c['rpm'])
-
-
-def read_sample_conditions(path):
-    with open(path) as f:
-        reader = csv.reader(f)
-        reader.next()
-        sample_conditions = [{'pedot': int(row[2]), 'rpm': int(row[1])} for row in reader]
-    return sample_conditions
-
-
-def read_movie_conditions(path):
-    with open(path) as f:
-        reader = csv.reader(f)
-        reader.next()
-        movie_conditions = [{'name': row[0], 'mode': row[1], 'samples': [int(s) for s in row[2].split(',')]} for row in
-                            reader]
-    return movie_conditions
 
 
 def read_rois(path):
@@ -268,149 +252,10 @@ class SplitAllTraces(luigi.Task):
         return luigi.LocalTarget(os.path.join('data', 'kinetics', 'split', '%s alldata.p' % self.name))
 
 
-class SplitTraces:
-    def __init__(self):
-        self.dat = {}
-
-    def __repr__(self):
-        ks = self.dat.keys()
-        return '%d entries: %s' % (len(ks), ' '.join(ks))
-
-    @staticmethod
-    def mk_key(pedot, rpm, mode, voltage):
-        return '%d,%d,%s,%.1f' % (pedot, rpm, mode, voltage)
-
-    @staticmethod
-    def get_cond_from_key(k):
-        p, r, m, v = k.split(',')
-        return int(p), int(r), m, float(v)
-
-    def set_data(self, pedot, rpm, mode, voltage, ts, vs):
-        assert (pedot in [20, 30, 40, 60, 80])
-        assert (rpm in [500, 1000, 2000, 3000, 4000, 5000])
-        assert (mode in ['const', 'ox', 'red'])
-        assert len(ts) == len(vs)
-        if mode == 'ox':
-            assert voltage in [0, 0.2, 0.4, 0.6, 0.8]
-        self.dat[self.mk_key(pedot, rpm, mode, voltage)] = (ts, vs)
-
-    def get_data(self, pedot, rpm, mode, voltage):
-        return self.dat[self.mk_key(pedot, rpm, mode, voltage)]
-
-
-def organize_data(dat_path, conditions_path):
-    with open(dat_path) as f:
-        reader = csv.reader(f)
-        rows = np.array([map(float, r) for r in reader])
-    dat = {}
-    count = 0
-
-    sample_conditions = read_sample_conditions(conditions_path)
-
-    for i in range(rows.shape[1]):
-        series = count / 3
-        pos = count % 3
-        # pos = 0: const, 1: oxd, 2: red
-        if (series + 1) in [3, 7, 8, 9, 13, 23]:
-            # print('swapped.',(series+1))
-            pos = 2 - pos  # Irregular order.
-
-        if series not in dat:
-            dat[series] = {}
-        # print(np.argmin(rows[:,i]))
-        # row_truncated = rows[:, i][0:np.argmin(rows[:, i])]
-        dat[series][pos] = rows[:, i]
-        # print(series, pos)
-        count += 1
-    return dat, sample_conditions
-
-
 def remove_trailing_zeros(vs):
     idx = np.where(vs == 0)[0][0]
     # print('remove_trailing_zeros',idx)
     return vs[0:idx]
-
-
-def split_for_mode(res, ts, vs, mode, pedot, rpm):
-    assert isinstance(res, SplitTraces)
-    assert (pedot in [20, 30, 40, 60, 80])
-    assert (rpm in [500, 1000, 2000, 3000, 4000, 5000])
-    assert (mode in ['const', 'ox', 'red'])
-
-    tss, vss = split_trace(ts, vs, range(2, 1000, 60))
-
-    voltage_dict = {
-        'const': [0.8, -0.5, 0.8, -0.5, 0.8, -0.5],
-        'ox': [0, 0.2, 0.4, 0.6, 0.8],
-        # Corrected on 12/7, 2016.
-        # See 20160512 Suda EC amperometry/analysis/voltage_profile.jl
-        'red': [0.4, 0.2, 0, -0.2, -0.5]
-    }
-
-    voltages = voltage_dict[mode]
-    if mode == 'const':
-        selected = zip(tss[1:], vss[1:])
-    else:
-        selected = zip(tss[3::2], vss[3::2])
-    for i, ys in enumerate(selected):
-        if i >= len(voltages):
-            break
-        ts = ys[0]
-        vs = ys[1]
-        voltage = voltages[i]
-        res.set_data(pedot, rpm, mode, voltage, ts, vs)
-
-
-def split_all_traces(in_csvs, movie_conditions_csv, sample_conditions_csv):
-    movie_conditions = read_movie_conditions(movie_conditions_csv)
-    sample_conditions = read_sample_conditions(sample_conditions_csv)
-    res = SplitTraces()
-
-    # Iterate through movie
-    movie_num = 1
-    for in_csv, movie_cond in zip(in_csvs, movie_conditions):
-        vss = load_csv(in_csv, 0, numpy=True)
-        assert vss.shape[1] == len(movie_cond['samples']), (in_csv, movie_cond['samples'])
-        mode = movie_cond['mode']
-        print(vss.shape)
-        for sample_num, vs in zip(movie_cond['samples'], vss.T):
-            cond = sample_conditions[sample_num - 1]
-            pedot = cond['pedot']
-            rpm = cond['rpm']
-            # Triple of (mode, pedot, rpm) uniquely identifies the sample in the set of movies.
-            t = range(len(vs))
-            split_for_mode(res, t, vs, mode, pedot, rpm)
-        movie_num += 1
-    return res
-
-
-def save_split_data(dat, dataset_name, p_path):
-    assert isinstance(dat, SplitTraces)
-
-    # Save as separate csv files.
-    for k, d in dat.dat.iteritems():
-        pedot, rpm, mode, voltage = SplitTraces.get_cond_from_key(k)
-        out_path = os.path.join('data', 'kinetics', 'split', dataset_name,
-                                '%d perc PEDOT - %d rpm' % (pedot, rpm),
-                                '%s %.1f.csv' % (mode, voltage))
-        ts, vs = d
-        ensure_folder_exists(out_path)
-        rows = map(list, zip(*[[str(t) for t in ts], [str(v) % v for v in vs]]))
-        with open(out_path, 'wb') as f:
-            writer = csv.writer(f)
-            for r in rows:
-                writer.writerow(r)
-
-    # Also, save as a picked data.
-    ensure_folder_exists(p_path)
-    with open(p_path, 'wb') as f:
-        pickle.dump(dat, f)
-
-
-def read_all_split_traces(path):
-    with open(path) as f:
-        obj = pickle.load(f)
-    return obj
 
 
 #
@@ -453,8 +298,8 @@ def plot_fitting_curve(ts, ys, c, p_initial):
         popt2, pcov = curve_fit(first_order_af_fixed(af), ts[fit_start:fit_to], ys[fit_start:fit_to],
                                 [ai, k, t0], method='lm')
         perr = np.sqrt(np.diag(pcov))
-        ai,k,t0 = popt2
-        print(p_initial, [t0,k,ai,af])
+        ai, k, t0 = popt2
+        print(p_initial, [t0, k, ai, af])
         # ts_fit = np.linspace(fit_start, fit_to, 100)
         ts_fit_plot = np.linspace(fit_start, 45, 100)
         ys_fit_plot = first_order_af_fixed(af)(ts_fit_plot, *popt2)
@@ -464,7 +309,7 @@ def plot_fitting_curve(ts, ys, c, p_initial):
         except:
             pass
         # plt.plot(ts_fit_plot, ys_fit_plot2, c=c, lw=1, ls='--')
-        return [t0,k,ai,af]
+        return [t0, k, ai, af]
     except RuntimeError as e:
         print('Fitting failed.')
 

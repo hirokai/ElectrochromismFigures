@@ -27,18 +27,18 @@ def correct_under_folder(folder,name)
                 new_path = path.gsub(/red (-?.+)\.csv$/) {
                     "red #{perm[$1]}.csv"
                     }.gsub(name,name+"_new")
-                else
-                    raise "No voltage value: #{path}" if $1.nil?
-                end
-                FileUtils.mkdir_p(File.dirname(new_path))
-                FileUtils.cp(path,new_path)
-                count += 1
             else
-                new_path = path.gsub(name,name+"_new")
-                FileUtils.mkdir_p(File.dirname(new_path))
-                FileUtils.cp(path,new_path)
-                count += 1
+                raise "No voltage value: #{path}" if $1.nil?
             end
+            FileUtils.mkdir_p(File.dirname(new_path))
+            FileUtils.cp(path,new_path)
+            count += 1
+        else
+            new_path = path.gsub(name,name+"_new")
+            FileUtils.mkdir_p(File.dirname(new_path))
+            FileUtils.cp(path,new_path)
+            count += 1
+        end
     }
 
     puts green("#{count} files were copied.")

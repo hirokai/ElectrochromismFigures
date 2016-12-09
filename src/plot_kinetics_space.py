@@ -1,12 +1,14 @@
-import luigi
 import csv
+
+import luigi
 import matplotlib.pyplot as plt
 import numpy as np
 from data_tools import ambiguous_path, colors10
-from measure_cie_space import CollectCIESpace
-from figure_tools import plot_and_save, set_common_format
 from luigi_tools import cleanup
 from matplotlib.ticker import MultipleLocator
+
+from measure_cie_space import CollectCIESpace
+from src.util.figure_tools import plot_and_save, set_common_format
 
 
 def normalize(vs, idx):

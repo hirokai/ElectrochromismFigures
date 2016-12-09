@@ -1,10 +1,12 @@
-import luigi
-from figure_tools import set_common_format, plot_and_save
-from luigi_tools import cleanup
-import matplotlib.pyplot as plt
-from matplotlib.ticker import MultipleLocator
-import numpy as np
 import os
+
+import luigi
+import matplotlib.pyplot as plt
+import numpy as np
+from luigi_tools import cleanup
+from matplotlib.ticker import MultipleLocator
+
+from src.util.figure_tools import set_common_format, plot_and_save
 
 
 def plot_cv():

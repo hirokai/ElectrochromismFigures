@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import os
 import csv
-from skimage import io
-import numpy as np
+import os
+import sys
+
+import luigi
 import matplotlib.pyplot as plt
+import numpy as np
 from image_tools import get_cie_rois
 from skimage import color
-import luigi
-from luigi_tools import cleanup
-import sys
+from skimage import io
+
 from util import basename_noext, ensure_folder_exists
-import shutil
 
 
 class RectROI:

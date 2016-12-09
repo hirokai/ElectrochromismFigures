@@ -1,12 +1,14 @@
 import csv
+import glob
+import os
+
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy import optimize
-import matplotlib.pyplot as plt
-import os
-from util import sort_with_order
-import glob
-from data_tools import colors10
+
+from src.util.data_tools import colors10
 from util import ensure_folder_exists
+from util import sort_with_order
 
 
 def correct_cielab(in_csv, scale_csv, out_csv):
