@@ -1,5 +1,6 @@
 import csv
 import os
+import re
 
 import luigi
 import matplotlib.pyplot as plt
@@ -27,10 +28,11 @@ def split_cv_cycle(xs, x_min=None, x_max=None):
     idxs_max = []
     for i, x in enumerate(xs):
         if x == x_min:
-            idxs_min.append(i)
+            if len(idxs_min) == 0 or i - idxs_min[-1] > 1:  # 2 successive points with same value are ignored.
+                idxs_min.append(i)
         if x == x_max:
-            idxs_max.append(i)
-    print(idxs_max)
+            if len(idxs_max) == 0 or i - idxs_max[-1] > 1:  # 2 successive points with same value are ignored.
+                idxs_max.append(i)
     return idxs_max[-2], idxs_max[-1]
 
 
@@ -52,6 +54,7 @@ def find_aux_line(xs, ys, arg=None, method='connecting'):
     elif method == 'connecting':
         arg = arg or (-0.2, 0.5)
         x_from, x_to = arg
+        print(xs)
         i1 = np.argwhere(xs == x_from)[1][0]
         i2 = np.argwhere(xs == x_to)[1][0]
         slope = (ys[i2] - ys[i1]) / (x_to - x_from)
@@ -93,6 +96,7 @@ def plot_ox_current_raw_overlay():
             reader = csv.reader(f, delimiter='\t')
             vs = np.transpose(map(lambda row: map(float, row)[0:2], [r for r in reader]))
         i_from, i_until = split_cv_cycle(vs[0])
+        # print(i_from, i_until)
         vs_section = vs[:, i_from:i_until]
         xs = vs_section[0]
         ys = vs_section[1]
@@ -110,35 +114,52 @@ def plot_ox_current_raw_overlay():
 
 def plot_ox_current():
     fig, ax = plt.subplots(figsize=(4.5, 3))
-    xss = []
-    yss = []
+    # FIXME: Use precise values that are the same as Fig S2.
+    thickness_table = {'500': 5800, '1k': 3900, '2k': 2900, '3k': 2800, '4k': 2000, '5k': 2300}
+    files = [
+             "71 30wt 1krpm.txt", "72 30wt 1krpm.txt", "74 30wt 2krpm.txt",
+             "86 30wt 3krpm.txt", "87 30wt 3krpm.txt", "88 30wt 4krpm.txt", "89 30wt 4krpm.txt", "90 30wt 5krpm.txt",
+             "91 30wt 5krpm.txt"]
+    data_series = []
     for n in files:
-        path = os.path.join('..', 'data', 'cv', n + '.txt')
+        path = os.path.join('..', 'data', 'cv', '1021', n)
         with open(path) as f:
             while True:
                 l = f.readline()
                 if l.find('Potential/V') == 0:
                     break
-            f.readline()
-            reader = csv.reader(f, delimiter='\t')
-            vs = np.transpose(map(lambda row: map(float, row)[0:2], [r for r in reader]))
+            for _ in range(2):
+                f.readline()
+            rows = []
+            for l in f.readlines():
+                if l.strip() != '':
+                    rows.append(map(float, l.split(', ')))
+            vs = np.transpose(rows)
         i_from, i_until = split_cv_cycle(vs[0])
         vs_section = vs[:, i_from:i_until]
         xs = vs_section[0]
         ys = vs_section[1]
-        xss.append(xs)
-        yss.append(ys)
+        rpm = re.search(r"\s(\S+)rpm", n).group(1)
+        data_series.append([n, rpm, thickness_table[rpm], xs, ys])
 
     currents = []
     thickness_plot = []
-    for i, vs in enumerate(zip(xss, yss)):
-        xs, ys = vs
+    lines = []
+    for i, vs in enumerate(data_series):
+        n, rpm, thickness, xs, ys = vs
         x_from = -0.3
         x_to = 0.6
 
         slope, intercept = find_aux_line(xs, ys, (-0.2, 0.5), method='connecting')
+        print(slope, intercept)
         xs_aux = np.linspace(x_from, x_to, num=(x_to - x_from) * 1000)
+        idx = thickness_table.keys().index(rpm)
         ys_aux = slope * xs_aux + intercept
+        plt.plot(xs, ys, c=colors10[idx % 10])
+        line, = plt.plot(xs_aux, ys_aux, label='%s rpm' % rpm, c=colors10[idx % 10])
+        lines.append(line)
+        plt.ylim([-0.0001, 0.0001])
+        plt.title(rpm)
 
         i1 = np.argwhere(xs == x_from)[1][0]
         i2 = np.argwhere(xs == x_to)[1][0]
@@ -148,12 +169,15 @@ def plot_ox_current():
         else:
             local_max_i = find_local_maxima(ys[i1:i2], order=5)[0]
             i_max = local_max_i[0] - 1
-        i_max2 = np.argwhere(abs(xs_aux - xs[i1 + i_max]) < 0.0004)[0][0]
+        i_max2 = np.argwhere(abs(xs_aux - xs[i1 + i_max]) < 0.001)[0][0]
+        print(i_max2)
         current = ys[i1 + i_max] - ys_aux[i_max2]
         currents.append(current)
-        thickness_plot.append(thickness[i])
+        thickness_plot.append(thickness)
+    plt.legend(handles=lines)
+    plt.show()
 
-    used = [True, True, False, True, True, True, True]
+    used = [True] * 20
     currents = np.array(currents) * 1e6
     print(currents)
     thickness_plot = np.array(thickness_plot) * 0.001
@@ -179,10 +203,6 @@ def plot_ox_current():
     ax.yaxis.set_minor_locator(MultipleLocator(5))
 
 
-plot_ox_current2 = plot_ox_current
-plot_ox_current_raw_overlay2 = plot_ox_current_raw_overlay
-
-
 class PlotOxCurrent(luigi.Task):
     name1 = luigi.Parameter()
     name2 = luigi.Parameter()
@@ -200,26 +220,10 @@ class PlotOxCurrent(luigi.Task):
         plot_and_save(plot_ox_current_raw_overlay, self.name2)
 
 
-class PlotOxCurrent2(luigi.Task):
-    name1 = luigi.Parameter()
-    name2 = luigi.Parameter()
-
-    def requires(self):
-        return []
-
-    def output(self):
-        return [luigi.LocalTarget('../dist/Fig ' + self.name1 + '.pdf'),
-                luigi.LocalTarget('../dist/Fig ' + self.name2 + '.pdf')]
-
-    def run(self):
-        set_common_format()
-        plot_and_save(plot_ox_current2, self.name1)
-        plot_and_save(plot_ox_current_raw_overlay2, self.name2)
-
-
 if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
     # cleanup(PlotOxCurrent(name1='S3',name2='2b-inset'))
     # luigi.run(['PlotOxCurrent','--name1','S3','--name2','2b-inset'])
-    cleanup(PlotOxCurrent2(name1='cv_thickness_revision', name2='cv_thickness_revision_inset'))
-    luigi.run(['PlotOxCurrent2', '--name1', 'cv_thickness_revision', '--name2', 'cv_thickness_revision_inset'])
+    plot_and_save(plot_ox_current, 'cv_thickness_revision')
+    # cleanup(PlotOxCurrent(name1='cv_thickness_revision', name2='cv_thickness_revision_inset'))
+    # luigi.run(['PlotOxCurrent', '--name1', 'cv_thickness_revision', '--name2', 'cv_thickness_revision_inset'])
