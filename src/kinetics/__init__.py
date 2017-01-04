@@ -70,7 +70,7 @@ def read_split_traces(typ):
                                     '%d perc PEDOT - %d rpm' % (pedot, rpm), '%s %.1f.csv' % (mode, voltage))
                 if os.path.exists(path):
                     traces = load_csv(path, numpy=True)
-                    dat.set_data(pedot, rpm, mode, voltage, traces)
+                    dat.append_data(pedot, rpm, mode, voltage, traces)
                 else:
                     print('Missing: %s' % path)
 
