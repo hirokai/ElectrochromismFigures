@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import optimize
 
-from src.util.data_tools import colors10
+from src.data_tools import colors10
 from util import ensure_folder_exists
 from util import sort_with_order
 

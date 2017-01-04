@@ -3,10 +3,10 @@ import os
 import luigi
 import matplotlib.pyplot as plt
 import numpy as np
-from luigi_tools import cleanup
 from matplotlib.ticker import MultipleLocator
 
-from src.util.figure_tools import set_common_format, plot_and_save
+from luigi_tools import cleanup
+from src.figure_tools import set_common_format, plot_and_save
 
 
 def plot_cv():

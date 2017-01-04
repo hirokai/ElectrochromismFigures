@@ -1,6 +1,6 @@
-import numpy as np
-import util
 import os
+
+import numpy as np
 
 
 #

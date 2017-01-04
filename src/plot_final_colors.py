@@ -4,13 +4,13 @@ import luigi
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from data_tools import colors10
-from luigi_tools import cleanup
 from matplotlib.ticker import MultipleLocator
 from scipy.optimize import curve_fit
 
+from data_tools import colors10
+from luigi_tools import cleanup
 from pedot_voltage_conditions import CurveFitStub
-from src.util.figure_tools import plot_and_save, set_common_format
+from src.figure_tools import plot_and_save, set_common_format
 
 
 def plot_final_colors(input_path):

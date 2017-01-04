@@ -4,14 +4,14 @@ import os
 import luigi
 import matplotlib.pyplot as plt
 import numpy as np
-from data_tools import colors10
-from luigi_tools import cleanup
 from matplotlib.ticker import MultipleLocator, FixedLocator
 from scipy.optimize import curve_fit
 from scipy.signal import argrelextrema
 from scipy.stats import linregress
 
-from src.util.figure_tools import plot_and_save, set_common_format
+from data_tools import colors10
+from luigi_tools import cleanup
+from src.figure_tools import plot_and_save, set_common_format
 
 files = ['500 rpm CV', '750 rpm CV', '1000 rpm CV', '2000 rpm CV',
          '0620/750 rpm cv', '0620/1000 rpm cv', '0620/2000 rpm cv2']

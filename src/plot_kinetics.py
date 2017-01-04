@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from data_tools import colors10, load_csv
-from data_tools import split_trace
-from luigi_tools import cleanup
 from matplotlib.ticker import MultipleLocator
 from scipy.optimize import curve_fit
 
+from data_tools import colors10, load_csv
+from data_tools import split_trace
+from luigi_tools import cleanup
 from pedot_voltage_conditions import CollectCIELabStub
-from src.util.figure_tools import plot_and_save, set_format, set_common_format
+from src.figure_tools import plot_and_save, set_format, set_common_format
 
 sns.set_style('white')
 sns.set_style("ticks")

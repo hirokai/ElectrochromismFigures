@@ -4,13 +4,13 @@ import re
 import luigi
 import matplotlib.pyplot as plt
 import numpy as np
-from data_tools import colors10
-from luigi_tools import cleanup
 from matplotlib.ticker import MultipleLocator
 from scipy import stats
 
-from src.util.figure_tools import plot_and_save
-from src.util.figure_tools import set_format, set_common_format
+from data_tools import colors10
+from luigi_tools import cleanup
+from src.figure_tools import plot_and_save
+from src.figure_tools import set_format, set_common_format
 
 
 def plot_uvvis():

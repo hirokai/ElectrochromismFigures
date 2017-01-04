@@ -1,13 +1,13 @@
 import luigi
 import matplotlib.pyplot as plt
 import numpy as np
-from data_tools import split_trace, save_csv, load_csv
-from image_tools import do_cie_analysis
-from luigi_tools import cleanup
 from matplotlib.ticker import MultipleLocator
 from scipy.optimize import curve_fit
 
-from src.util.figure_tools import plot_and_save, set_common_format
+from data_tools import split_trace, save_csv, load_csv
+from image_tools import do_cie_analysis
+from luigi_tools import cleanup
+from src.figure_tools import plot_and_save, set_common_format
 
 
 def first_order(t, a_i, a_f, k, t0):

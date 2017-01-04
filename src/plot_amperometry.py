@@ -1,10 +1,10 @@
 import luigi
 import matplotlib.pyplot as plt
 import numpy as np
+
 from data_tools import colors10, load_csv
 from data_tools import split_trace
-
-from src.util.figure_tools import set_common_format
+from src.figure_tools import set_common_format
 
 
 def read_txt(path):

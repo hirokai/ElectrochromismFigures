@@ -5,7 +5,7 @@ import numpy as np
 from skimage import io, color
 
 from make_slices import MakeSlicesStub
-from src.util.data_tools import save_csv
+from src.data_tools import save_csv
 
 
 def run_set(slices_folder, rois):
