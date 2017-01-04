@@ -179,6 +179,10 @@ def plot_ox_current():
     ax.yaxis.set_minor_locator(MultipleLocator(5))
 
 
+plot_ox_current2 = plot_ox_current
+plot_ox_current_raw_overlay2 = plot_ox_current_raw_overlay
+
+
 class PlotOxCurrent(luigi.Task):
     name1 = luigi.Parameter()
     name2 = luigi.Parameter()
@@ -196,7 +200,26 @@ class PlotOxCurrent(luigi.Task):
         plot_and_save(plot_ox_current_raw_overlay, self.name2)
 
 
+class PlotOxCurrent2(luigi.Task):
+    name1 = luigi.Parameter()
+    name2 = luigi.Parameter()
+
+    def requires(self):
+        return []
+
+    def output(self):
+        return [luigi.LocalTarget('../dist/Fig '+self.name1+'.pdf'),
+                luigi.LocalTarget('../dist/Fig ' + self.name2 + '.pdf')]
+
+    def run(self):
+        set_common_format()
+        plot_and_save(plot_ox_current2,self.name1)
+        plot_and_save(plot_ox_current_raw_overlay2, self.name2)
+
+
 if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
-    cleanup(PlotOxCurrent(name1='S3',name2='2b-inset'))
-    luigi.run(['PlotOxCurrent','--name1','S3','--name2','2b-inset'])
+    # cleanup(PlotOxCurrent(name1='S3',name2='2b-inset'))
+    # luigi.run(['PlotOxCurrent','--name1','S3','--name2','2b-inset'])
+    cleanup(PlotOxCurrent2(name1='cv_thickness_revision',name2='cv_thickness_revision_inset'))
+    luigi.run(['PlotOxCurrent2','--name1','cv_thickness_revision','--name2','cv_thickness_revision_inset'])
