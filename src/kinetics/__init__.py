@@ -1,5 +1,5 @@
 import os
-from util.data_tools import load_csv
+from data_tools import load_csv
 
 
 # Data for kinetics plots

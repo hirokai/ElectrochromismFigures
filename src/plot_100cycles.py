@@ -7,7 +7,9 @@ from scipy.optimize import curve_fit
 from data_tools import split_trace, save_csv, load_csv
 from image_tools import do_cie_analysis
 from luigi_tools import cleanup
-from src.figure_tools import plot_and_save, set_common_format
+from figure_tools import plot_and_save, set_common_format
+from measure_kinetics_revision import MakeAllSlices, RawLValuesOfSingleMovie, RawLValuesOfAllMovies
+from measure_100cycles import MeasureAll100Cycles
 
 
 def first_order(t, a_i, a_f, k, t0):
@@ -95,31 +97,37 @@ def plot_split_traces(l_vs_t):
 
 
 class CollectCIELab100Cycles(luigi.Task):
+    name = luigi.Parameter()
+    folder = luigi.Parameter()
+
     def output(self):
         return [luigi.LocalTarget('../data/1-9cycles_new.csv'), luigi.LocalTarget('../data/93-100cycles_new.csv')]
 
     def requires(self):
-        return None
+        return MakeAllSlices(name=self.name, folder=self.folder)
 
     def run(self):
         os.chdir(os.path.dirname(__file__))
         collect_all_cielab()
 
 
-class Plot100Cycles(luigi.Task):
+class Plot100Cycles2(luigi.Task):
     name = luigi.Parameter()
     resources = {"matplotlib": 1}
 
     def requires(self):
-        return CollectCIELab100Cycles()
+        return RawLValuesOfAllMovies(name='20161111', folder=
+            '/Volumes/Mac Ext 2/Suda Electrochromism/20161111/')
 
     def output(self):
         return [luigi.LocalTarget('../dist/Fig ' + self.name + '.pdf')]
 
     def run(self):
-        l_vs_t = get_l_vs_t(self.input()[0].path, self.input()[1].path)
         set_common_format()
-        plot_and_save(plot_l_vs_t(l_vs_t), self.name)
+        l_vs_t = get_l_vs_t(self.input()[0][0].path, self.input()[0][1].path)
+        plot_and_save(plot_l_vs_t(l_vs_t), self.name + "_a")
+        l_vs_t = get_l_vs_t(self.input()[1][0].path, self.input()[1][1].path)
+        plot_and_save(plot_l_vs_t(l_vs_t), self.name + "_b")
         # plot_split_traces(l_vs_t)
 
 
@@ -127,5 +135,8 @@ if __name__ == "__main__":
     import os
 
     os.chdir(os.path.dirname(__file__))
-    cleanup(Plot100Cycles(name='3c'))
-    luigi.run(['Plot100Cycles', '--name', '3c'])
+    # cleanup(Plot100Cycles(name='3c'))
+    # luigi.run(['Plot100Cycles', '--name', '3c'])
+
+    cleanup(Plot100Cycles2(name='100cycles_revision'))
+    luigi.run(['Plot100Cycles2', '--name', '100cycles_revision'])

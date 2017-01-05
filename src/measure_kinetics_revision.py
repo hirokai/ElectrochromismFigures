@@ -9,13 +9,13 @@ import luigi
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
-from src.util.data_tools import colors10, load_csv, save_csv
-from util.util import ensure_exists, ensure_folder_exists, basename_noext, bcolors
+from data_tools import colors10, load_csv, save_csv
+from util import ensure_exists, ensure_folder_exists, basename_noext, bcolors
 
 from kinetics.split import SplitTraces, split_all_traces, save_split_data
 from make_slices import mk_slices
 from measure_colorchart import MeasureLValuesOfColorCharts
-from src.image_tools import get_cie_l_rois
+from image_tools import get_cie_l_rois
 
 
 #
@@ -55,10 +55,6 @@ class MakeAllSlices(luigi.WrapperTask):
     def requires(self):
         print('MakeAllSlices: %s' % self.folder)
         movie_files = sorted(filter(os.path.isfile, [os.path.join(self.folder, n) for n in os.listdir(self.folder)]))
-        roi_path = 'parameters/%s/rois.csv' % self.name
-        rois = read_rois(roi_path)
-        # print(sorted(rois.keys()), folders)
-        # print(rois)
         for num, f in enumerate(movie_files):
             yield MakeSingleMovieSlices(path=f)
 

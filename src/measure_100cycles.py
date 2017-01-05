@@ -1,6 +1,8 @@
 import os
 import luigi
-from measure_kinetics_revision import all_make_slices, all_measure_cielab
+from measure_kinetics_revision import all_measure_cielab
+from make_slices import all_make_slices
+
 
 # FIXME: Need to be updated to use the latest version of analysis.
 
@@ -33,7 +35,7 @@ class RawLValues100Cycles(luigi.Task):
 class MeasureAll100Cycles(luigi.WrapperTask):
     def requires(self):
         yield RawLValues100Cycles(name='20161024',folder='/Volumes/Mac Ext 2/Suda Electrochromism/20161024')
-        yield RawLValues100Cycles(name='20151201', folder='/Volumes/Mac Ext 2/Suda Electrochromism/20161201')
+        yield RawLValues100Cycles(name='20151111', folder='/Volumes/Mac Ext 2/Suda Electrochromism/20161111')
 
 
 def main():
