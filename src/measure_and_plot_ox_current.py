@@ -14,9 +14,6 @@ from data_tools import colors10
 from luigi_tools import cleanup
 from src.figure_tools import plot_and_save, set_common_format
 
-files = ['500 rpm CV', '750 rpm CV', '1000 rpm CV', '2000 rpm CV',
-         '0620/750 rpm cv', '0620/1000 rpm cv', '0620/2000 rpm cv2']
-
 
 def split_cv_cycle(xs, x_min=None, x_max=None):
     if x_min is None:
@@ -41,7 +38,7 @@ def slope_at(xs, ys, x_at, width=11):
     assert (width % 2 == 1)
     w = int((width - 1) / 2)
     i = np.argwhere(xs == x_at)[1][0]
-    print(np.argwhere(xs == x_at), xs[i], ys[i])
+    # print(np.argwhere(xs == x_at), xs[i], ys[i])
     slope, intercept, r_value, p_value, std_err = linregress(xs[i - w:i + w + 1], ys[i - w:i + w + 1])
     return slope, i
 
@@ -54,7 +51,6 @@ def find_aux_line(xs, ys, arg=None, method='connecting'):
     elif method == 'connecting':
         arg = arg or (-0.2, 0.5)
         x_from, x_to = arg
-        print(xs)
         i1 = np.argwhere(xs == x_from)[1][0]
         i2 = np.argwhere(xs == x_to)[1][0]
         slope = (ys[i2] - ys[i1]) / (x_to - x_from)
@@ -66,12 +62,9 @@ def find_local_maxima(vs, order=5):
     return argrelextrema(vs, np.greater, order=order)
 
 
-thickness = [5490, 4377, 3819, 2946, 4377, 3819, 2946]
-
-
 # http://stackoverflow.com/questions/19189362/getting-the-r-squared-value-using-curve-fit
 def calc_r2(xdata, ydata, f, popt):
-    residuals = ydata - f(xdata, popt[0])
+    residuals = ydata - f(xdata, *popt)
     ss_res = np.sum(residuals ** 2)
     ss_tot = np.sum((ydata - np.mean(ydata)) ** 2)
     r_squared = 1 - (ss_res / ss_tot)
@@ -85,6 +78,12 @@ def plot_ox_current_raw_overlay():
     xss = []
     yss = []
     count = 0
+
+    files = [
+        "71 30wt 1krpm.txt", "72 30wt 1krpm.txt", "74 30wt 2krpm.txt",
+        "86 30wt 3krpm.txt", "87 30wt 3krpm.txt", "88 30wt 4krpm.txt",
+        "89 30wt 4krpm.txt", "90 30wt 5krpm.txt", "91 30wt 5krpm.txt"]
+
     for i, n in enumerate(files):
         path = os.path.join('..', 'data', 'cv', n + '.txt')
         with open(path) as f:
@@ -112,86 +111,114 @@ def plot_ox_current_raw_overlay():
     plt.ylim([0, 40])
 
 
-def plot_ox_current():
-    fig, ax = plt.subplots(figsize=(4.5, 3))
-    # FIXME: Use precise values that are the same as Fig S2.
-    thickness_table = {'500': 5800, '1k': 3900, '2k': 2900, '3k': 2800, '4k': 2000, '5k': 2300}
-    files = [
-             "71 30wt 1krpm.txt", "72 30wt 1krpm.txt", "74 30wt 2krpm.txt",
-             "86 30wt 3krpm.txt", "87 30wt 3krpm.txt", "88 30wt 4krpm.txt", "89 30wt 4krpm.txt", "90 30wt 5krpm.txt",
-             "91 30wt 5krpm.txt"]
+def read_raw_data(files, thickness_table):
     data_series = []
+    instrument = None
     for n in files:
-        path = os.path.join('..', 'data', 'cv', '1021', n)
+        path = os.path.join('..', 'data', 'cv', n)
         with open(path) as f:
             while True:
                 l = f.readline()
                 if l.find('Potential/V') == 0:
                     break
-            for _ in range(2):
+                m = re.search(r"Instrument Model:\s+(\S+)", l)
+                if m:
+                    instrument = m.group(1)
+            for _ in range(2 if instrument == 'ALS2323' else 1):
                 f.readline()
             rows = []
             for l in f.readlines():
                 if l.strip() != '':
-                    rows.append(map(float, l.split(', ')))
+                    rows.append(map(float, l.split(', ' if instrument == 'ALS2323' else '\t')))
             vs = np.transpose(rows)
         i_from, i_until = split_cv_cycle(vs[0])
         vs_section = vs[:, i_from:i_until]
         xs = vs_section[0]
         ys = vs_section[1]
-        rpm = re.search(r"\s(\S+)rpm", n).group(1)
-        data_series.append([n, rpm, thickness_table[rpm], xs, ys])
+        print(n)
+        rpm = re.search(r"[/ ](\w+)\s?rpm", n).group(1)
+        idx = thickness_table.keys().index(rpm)
+        data_series.append([n, rpm, thickness_table[rpm], xs, ys, colors10[idx]])
+    return data_series
 
-    currents = []
-    thickness_plot = []
-    lines = []
+
+def measure_and_plot_ox_current():
+    thickness_table_0620 = {'500': 5490, '750': 4377, '1000': 3819, '2000': 2946}
+
+    thickness_table = {'500': 5317, '1k': 3961, '2k': 2936, '3k': 2717, '4k': 2662, '5k': 2434}
+
+    fig, ax = plt.subplots(figsize=(4.5, 3))
+
+    files_0620 = ['0622/500 rpm CV.txt', '0622/750 rpm CV.txt', '0620/750 rpm cv.txt',
+                  '0622/1000 rpm CV.txt', '0620/1000 rpm cv.txt',
+                  '0622/2000 rpm CV.txt', '0620/2000 rpm cv2.txt']
+    files = [
+        "1021/71 30wt 1krpm.txt", "1021/72 30wt 1krpm.txt", "1021/74 30wt 2krpm.txt", "0620/30wt 2krpm.txt",
+        "1021/86 30wt 3krpm.txt", "1021/87 30wt 3krpm.txt", "1021/88 30wt 4krpm.txt", "1021/89 30wt 4krpm.txt"]
+
+    data_series = read_raw_data(files_0620, thickness_table_0620) + read_raw_data(files, thickness_table)
+
+    # Measure current
+    results = []
+    x_from = -0.3
+    x_to = 0.5
     for i, vs in enumerate(data_series):
-        n, rpm, thickness, xs, ys = vs
-        x_from = -0.3
-        x_to = 0.6
+        n, rpm, thickness, xs, ys, _ = vs
 
         slope, intercept = find_aux_line(xs, ys, (-0.2, 0.5), method='connecting')
-        print(slope, intercept)
         xs_aux = np.linspace(x_from, x_to, num=(x_to - x_from) * 1000)
-        idx = thickness_table.keys().index(rpm)
         ys_aux = slope * xs_aux + intercept
-        plt.plot(xs, ys, c=colors10[idx % 10])
-        line, = plt.plot(xs_aux, ys_aux, label='%s rpm' % rpm, c=colors10[idx % 10])
-        lines.append(line)
-        plt.ylim([-0.0001, 0.0001])
-        plt.title(rpm)
 
         i1 = np.argwhere(xs == x_from)[1][0]
+        # i2 = np.argwhere(xs == x_to)[1][0]
         i2 = np.argwhere(xs == x_to)[1][0]
-        if i == 4:  # adhoc fix
-            i_max = np.argmax(ys[i1:i2])
-            local_max_i = np.array([i_max])
-        else:
-            local_max_i = find_local_maxima(ys[i1:i2], order=5)[0]
-            i_max = local_max_i[0] - 1
-        i_max2 = np.argwhere(abs(xs_aux - xs[i1 + i_max]) < 0.001)[0][0]
-        print(i_max2)
-        current = ys[i1 + i_max] - ys_aux[i_max2]
-        currents.append(current)
-        thickness_plot.append(thickness)
-    plt.legend(handles=lines)
+
+        # Measurement of current using the auxiliary line calculated above.
+        x_max_point = xs[np.argmax(ys[i1:i2]) + i1]
+        y_max_point = ys[np.argmax(ys[i1:i2]) + i1]
+        current = y_max_point - ys_aux[np.argmax(ys[i1:i2]) - 2]
+        results.append([slope, intercept, current, x_max_point, y_max_point, ys_aux[np.argmax(ys[i1:i2]) - 2]])
+
+    # Plotting each measurement result
+    color_table = {'500': colors10[0], '750': colors10[1], '1000': colors10[2], '1k': colors10[2],
+                   '2000': colors10[3], '2k': colors10[3], '3000': colors10[4], '3k': colors10[4],
+                   '4000': colors10[5], '4k': colors10[5]}
+    for i, vs in enumerate(zip(data_series, results)):
+        vs1, vs2 = vs
+        n, rpm, thickness, xs, ys, _ = vs1
+        slope, intercept, current, x_max_point, y_max_point, yaux_max_point = vs2
+        color = color_table[rpm]
+        plt.subplot(5, 4, i + 1)
+        plt.plot(xs, ys, c=color)
+        xs_aux = np.linspace(x_from, x_to, num=(x_to - x_from) * 1000)
+        ys_aux = slope * xs_aux + intercept
+        line, = plt.plot(xs_aux, ys_aux, label='%s rpm' % rpm, c=color)
+        plt.plot([x_max_point, x_max_point], [yaux_max_point, y_max_point])
+        plt.ylim([-1e-4, 1e-4])
+        plt.title('%s rpm, %.1e' % (rpm, current))
+        plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
     plt.show()
 
-    used = [True] * 20
-    currents = np.array(currents) * 1e6
-    print(currents)
-    thickness_plot = np.array(thickness_plot) * 0.001
-    plt.scatter(thickness_plot, currents, facecolor=map(lambda a: colors10[0] if a else 'r', used), s=25, lw=0)
+    # Plotting current versus thickness
+    currents = np.array(map(lambda a: a[2], results)) * 1e6  # in microA
+    thickness_for_plot = np.array(map(lambda a: a[2], data_series)) * 1e-3  # in um
+    used = np.array([True] * currents.shape[0])
+    used[3] = False
+    plt.scatter(thickness_for_plot, currents, facecolor=map(lambda a: colors10[0] if a else 'r', used), s=25, lw=0)
     used_y = currents[used]
-    used_x = thickness_plot[used]
+    used_x = thickness_for_plot[used]
 
     def func(x, k):
-        return k * x
+        x0 = 0
+        return k * x + x0
 
     popt, pcov = curve_fit(func, used_x, used_y)
     slope = popt[0]
+    # x0 = popt[1]
     xs = np.linspace(0, 6000, num=2)
-    ys = slope * xs
+    ys = func(xs,*popt)
+    r2 = calc_r2(used_x, used_y, func, popt)
+    print(slope,r2)
     plt.plot(xs, ys, c=colors10[0], lw=1)
     plt.xlabel('Film thickness [um]')
     plt.ylabel('Oxidative peak current [uA]')
@@ -216,7 +243,7 @@ class PlotOxCurrent(luigi.Task):
 
     def run(self):
         set_common_format()
-        plot_and_save(plot_ox_current, self.name1)
+        plot_and_save(measure_and_plot_ox_current, self.name1)
         plot_and_save(plot_ox_current_raw_overlay, self.name2)
 
 
@@ -224,6 +251,6 @@ if __name__ == "__main__":
     os.chdir(os.path.dirname(__file__))
     # cleanup(PlotOxCurrent(name1='S3',name2='2b-inset'))
     # luigi.run(['PlotOxCurrent','--name1','S3','--name2','2b-inset'])
-    plot_and_save(plot_ox_current, 'cv_thickness_revision')
+    plot_and_save(measure_and_plot_ox_current, 'cv_thickness_revision')
     # cleanup(PlotOxCurrent(name1='cv_thickness_revision', name2='cv_thickness_revision_inset'))
     # luigi.run(['PlotOxCurrent', '--name1', 'cv_thickness_revision', '--name2', 'cv_thickness_revision_inset'])
