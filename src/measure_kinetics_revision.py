@@ -448,12 +448,12 @@ class TestKineticsAll(unittest.TestCase):
 
     def test_MakeAllSlices(self):
         r = luigi.run(['MakeAllSlices', '--name', '20161013', '--folder',
-                       '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/', '--no-lock'])
+                       '/Volumes/ExtWork/Suda Electrochromism/20161013/', '--no-lock'])
         self.assertTrue(r)
 
     def test_RawLValuesOfSingleMovie(self):
         r = luigi.run(['RawLValuesOfSingleMovie', '--name', '20161013', '--path',
-                       '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/MVI_7877.MOV',
+                       '/Volumes/ExtWork/Suda Electrochromism/20161013/MVI_7877.MOV',
                        '--roi', '100,100,20,20', '--no-lock'])
         self.assertTrue(r)
 
@@ -461,37 +461,37 @@ class TestKineticsAll(unittest.TestCase):
         # shutil.rmtree('data/kinetics/raw/20161013', ignore_errors=True)
         # shutil.rmtree('data/kinetics/raw/20161013 all_l_values.csv', ignore_errors=True)
         r = luigi.run(['RawLValuesOfAllMovies', '--name', '20161019', '--folder',
-                       '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/', '--workers', '4', '--no-lock'])
+                       '/Volumes/ExtWork/Suda Electrochromism/20161019/', '--workers', '4', '--no-lock'])
         self.assertTrue(r)
 
     def test_CorrectedLValuesOfAllMovies(self):
         # shutil.rmtree('data/kinetics/corrected', ignore_errors=True)
         r = luigi.run(['CorrectedLValuesOfAllMovies', '--name', '20161013', '--folder',
-                       '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/', '--workers', '4', '--no-lock'])
+                       '/Volumes/ExtWork/Suda Electrochromism/20161013/', '--workers', '4', '--no-lock'])
         self.assertTrue(r)
 
     def test_SplitAllTraces(self):
         shutil.rmtree('data/kinetics/split', ignore_errors=True)
         r = luigi.run(['SplitAllTraces', '--name', '20161013', '--folder',
-                       '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/', '--workers', '4', '--no-lock'])
+                       '/Volumes/ExtWork/Suda Electrochromism/20161013/', '--workers', '4', '--no-lock'])
         self.assertTrue(r)
 
     def test_SplitAllTraces2(self):
         shutil.rmtree('data/kinetics/split', ignore_errors=True)
         r = luigi.run(['SplitAllTraces', '--name', '20161019', '--folder',
-                       '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/', '--workers', '4', '--no-lock'])
+                       '/Volumes/ExtWork/Suda Electrochromism/20161019/', '--workers', '4', '--no-lock'])
         self.assertTrue(r)
 
     # def test_PlotSingleKineticsData(self):
     #     shutil.rmtree('data/kinetics/split', ignore_errors=True)
     #     r = luigi.run(['PlotSingleKineticsData', '--name', '20161013', '--folder',
-    #                    '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/', '--workers', '1', '--no-lock'])
+    #                    '/Volumes/ExtWork/Suda Electrochromism/20161013/', '--workers', '1', '--no-lock'])
     #     self.assertTrue(r)
 
     def test_PlotAllTraces(self):
         shutil.rmtree('dist/kinetics_revision', ignore_errors=True)
         r = luigi.run(['PlotAllTraces', '--name', '20161013', '--folder',
-                       '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/', '--workers', '1', '--no-lock'])
+                       '/Volumes/ExtWork/Suda Electrochromism/20161013/', '--workers', '1', '--no-lock'])
         self.assertTrue(r)
 
 
@@ -502,9 +502,9 @@ class TestKineticsAll(unittest.TestCase):
 
 class MeasureAndPlotAll(luigi.WrapperTask):
     def requires(self):
-        folders = {'20161013': '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/',
-                   '20161019': '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/'}
-        # folders_test = {'20161013': '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/'}
+        folders = {'20161013': '/Volumes/ExtWork/Suda Electrochromism/20161013/',
+                   '20161019': '/Volumes/ExtWork/Suda Electrochromism/20161019/'}
+        # folders_test = {'20161013': '/Volumes/ExtWork/Suda Electrochromism/20161013/'}
         tasks = [PlotAllTraces(name=k, folder=v) for k, v in folders.iteritems()]
         for t in tasks:
             yield t
@@ -514,8 +514,8 @@ def main():
     # logger = logging.getLogger('luigi-interface')
     # logger.setLevel(logging.WARNING)
     os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
-    # folders = {'20161013': '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/',
-    #            '20161019': '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/'}
+    # folders = {'20161013': '/Volumes/ExtWork/Suda Electrochromism/20161013/',
+    #            '20161019': '/Volumes/ExtWork/Suda Electrochromism/20161019/'}
     if os.path.exists('data/kinetics_split/20161013 alldata.p'):
         os.remove('data/kinetics_split/20161013 alldata.p')
     out_folder = 'dist/kinetics_revision'
@@ -523,7 +523,7 @@ def main():
         shutil.rmtree(out_folder)
     # luigi.run(['MeasureAndPlotAll'])
     luigi.run(['CorrectedLValues', '--name', '20161013', '--folder',
-               '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/'])
+               '/Volumes/ExtWork/Suda Electrochromism/20161013/'])
 
 
 if __name__ == "__main__":

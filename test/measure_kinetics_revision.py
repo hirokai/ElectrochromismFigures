@@ -7,4 +7,4 @@ from measure_kinetics_revision import TestMakeAllSlices
 
 def test_mk_slices():
     luigi.run(['TestMakeAllSlices', '--folder',
-               '/Volumes/Mac Ext 2/Suda Electrochromism/20161013/'])
+               '/Volumes/ExtWork/Suda Electrochromism/20161013/'])

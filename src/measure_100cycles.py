@@ -34,8 +34,8 @@ class RawLValues100Cycles(luigi.Task):
 
 class MeasureAll100Cycles(luigi.WrapperTask):
     def requires(self):
-        yield RawLValues100Cycles(name='20161024',folder='/Volumes/Mac Ext 2/Suda Electrochromism/20161024')
-        yield RawLValues100Cycles(name='20151111', folder='/Volumes/Mac Ext 2/Suda Electrochromism/20161111')
+        yield RawLValues100Cycles(name='20161024',folder='/Volumes/ExtWork/Suda Electrochromism/20161024')
+        yield RawLValues100Cycles(name='20151111', folder='/Volumes/ExtWork/Suda Electrochromism/20161111')
 
 
 def main():

@@ -117,7 +117,7 @@ class Plot100Cycles2(luigi.Task):
 
     def requires(self):
         return RawLValuesOfAllMovies(name='20161111', folder=
-            '/Volumes/Mac Ext 2/Suda Electrochromism/20161111/')
+            '/Volumes/ExtWork/Suda Electrochromism/20161111/')
 
     def output(self):
         return [luigi.LocalTarget('../dist/Fig ' + self.name + '.pdf')]

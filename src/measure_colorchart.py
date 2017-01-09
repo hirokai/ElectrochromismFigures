@@ -311,7 +311,7 @@ def main():
     # shutil.rmtree(os.path.join('data', 'kinetics', 'colorchart', '20161013'), ignore_errors=True)
     luigi.run(
         ['MeasureLValuesOfColorCharts', '--name', '20161019',
-         '--folder', '/Volumes/Mac Ext 2/Suda Electrochromism/20161019/',
+         '--folder', '/Volumes/ExtWork/Suda Electrochromism/20161019/',
          '--roipath', 'parameters/20161019/calibration_rois.csv'])
 
 
