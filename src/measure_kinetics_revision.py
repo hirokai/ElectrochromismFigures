@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 import unittest
+import re
 
 import luigi
 import matplotlib.pyplot as plt
@@ -26,6 +27,7 @@ def mk_condition_name(c):
     return '%d wt%% PEDOT, %d rpm' % (c['pedot'], c['rpm'])
 
 
+# Read multiple ROIs for a single movie (in which multiple samples exist in the same movie).
 def read_rois(path):
     with open(path) as f:
         reader = csv.reader(f)
@@ -39,6 +41,18 @@ def read_rois(path):
                 if current_num not in obj:
                     obj[current_num] = []
                 obj[current_num].append(map(int, row[7:11]))
+    return obj
+
+
+def read_rois_sample(path):
+    with open(path) as f:
+        reader = csv.reader(f)
+        _ = reader.next()  # Skip first row
+        obj = {}
+        for row in reader:
+            num = row[0]
+            # Dict value is a list of list, to conform to the common format as read_rois
+            obj[num] = [map(int, row[1:5])]
     return obj
 
 
@@ -121,6 +135,7 @@ class RawLValuesOfSingleMovie(luigi.Task):
     name = luigi.Parameter()
     path = luigi.Parameter()
     roi = luigi.Parameter()
+    mode = luigi.Parameter()
 
     def requires(self):
         return MakeSingleMovieSlices(path=self.path)
@@ -132,8 +147,9 @@ class RawLValuesOfSingleMovie(luigi.Task):
         if self.roi == '':
             print "No ROI"
         else:
+            max_timepoints = 10000 if self.mode == '100cycles' else 1000
             rois = list(grouper(4, [int(s) for s in str(self.roi).split(',')]))
-            lss = measure_movie_slices(folder_path, rois)
+            lss = measure_movie_slices(folder_path, rois, max_timepoints=max_timepoints)
             ensure_folder_exists(self.output().path)
             np.savetxt(self.output().path, lss.transpose(), delimiter=",")
             # with open(self.output().path) as f:
@@ -141,13 +157,13 @@ class RawLValuesOfSingleMovie(luigi.Task):
             #     writer.writerow([for ls in lss])
 
     def output(self):
-        return luigi.LocalTarget(os.path.join('data', 'kinetics', 'raw',
+        return luigi.LocalTarget(os.path.join('data', self.mode, 'raw',
                                               self.name, "%s.csv" % basename_noext(self.path)))
 
 
 # http://stackoverflow.com/questions/4998427/how-to-group-elements-in-python-by-n-elements
 def grouper(n, iterable, fillvalue=None):
-    "grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx"
+    """grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx"""
     args = [iter(iterable)] * n
     return itertools.izip_longest(fillvalue=fillvalue, *args)
 
@@ -159,6 +175,7 @@ def flatten(vs):
 class RawLValuesOfAllMovies(luigi.Task):
     name = luigi.Parameter()
     folder = luigi.Parameter()
+    mode = luigi.Parameter()
 
     def requires(self):
         def test(p):
@@ -166,18 +183,23 @@ class RawLValuesOfAllMovies(luigi.Task):
 
         movie_files = sorted(filter(test, [os.path.join(self.folder, n) for n in os.listdir(self.folder)]))
         # print(movie_files)
-        roi_path = 'parameters/%s/rois.csv' % self.name
-        rois = read_rois(roi_path)
+        roi_path = 'parameters/%s/sample rois.csv' % self.name
+        rois = read_rois_sample(roi_path)
+        print('ROIs:', rois)
 
         def mk(f):
-            r = rois.get(os.path.basename(f)[4:8])
+            n = os.path.basename(f)[4:8]
+            if n is None or not re.match(r"""\d+""", n):
+                n = basename_noext(f)
+            print('RawLValuesOfAllMovies: basename = %s' % n)
+            r = rois.get(n)
             if r is not None:
                 return ','.join(map(str, flatten(r)))
             else:
-                print('ROI not found: %s, %s, %s' % (os.path.basename(f)[4:8], f, ' '.join(rois.keys())))
+                print('ROI not found: %s, %s, %s' % (n, f, ' '.join(rois.keys())))
                 return ''
 
-        return [RawLValuesOfSingleMovie(name=self.name, path=f, roi=mk(f))
+        return [RawLValuesOfSingleMovie(name=self.name, path=f, roi=mk(f), mode=self.mode)
                 for f in movie_files]
 
     def output(self):

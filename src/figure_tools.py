@@ -13,8 +13,9 @@ def plot_and_save(func, name, show=False):
     plt.clf()
     # print hashlib.sha256(func.func_code.co_code).hexdigest()
     res = func()
-    ensure_exists('../dist')
-    plt.savefig('../dist/Fig ' + name + '.pdf')
+    # FIXME: Use correct relative path for all cases
+    ensure_exists('dist')
+    plt.savefig('dist/Fig ' + name + '.pdf')
     if show:
         plt.show()
     return res

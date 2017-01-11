@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib.ticker import MultipleLocator
 from scipy.optimize import curve_fit
 
+from util import bcolors
 from data_tools import split_trace, save_csv, load_csv
 from image_tools import do_cie_analysis
 from luigi_tools import cleanup
@@ -17,7 +18,9 @@ def first_order(t, a_i, a_f, k, t0):
     return y
 
 
-def collect_all_cielab():
+def collect_all_cielab(output_folder):
+    print('collect_all_cielab(): %s' % output_folder)
+    return
     root_folder = os.path.join(os.path.expanduser('~'), 'Google Drive/ExpDataLarge/Suda EC 100 cycles slices')
     roi = [906, 291, 40, 40]
     folder = os.path.join(root_folder, '100 cycles slices')
@@ -30,17 +33,24 @@ def collect_all_cielab():
     save_csv('../data/1-9cycles_new.csv', [['File number', 'L', 'a', 'b']] + labs)
 
 
-def get_l_vs_t(path1, path2):
+def get_l_vs_t(path1, path2, interval=1, time_omitted=False):
+    print(bcolors.OKGREEN + 'Files reading: %s, %s' % (path1, path2) + bcolors.ENDC)
     vs = np.array(load_csv(path1, skip_rows=1))
     offset = 62
     print(vs)
-    ts1 = (vs[:, 0][offset::10].astype(float) - offset) / 60
-    ls1 = vs[:, 1][offset::10].astype(float)
+    ls1 = vs[:, 1][offset::interval].astype(float)
+    if time_omitted:
+        ts1 = np.array(range(len(ls1))).astype(float) / 60
+    else:
+        ts1 = (vs[:, 0][offset::interval].astype(float) - offset) / 60
 
     vs = np.array(load_csv(path2, skip_rows=1))
     offset = 0
-    ts2 = (vs[:, 0][offset::10].astype(float) - offset) / 60
-    ls2 = vs[:, 1][offset::10].astype(float) * 1.15
+    ls2 = vs[:, 1][offset::interval].astype(float)
+    if time_omitted:
+        ts2 = np.array(range(len(ls2))).astype(float) / 60
+    else:
+        ts2 = (vs[:, 0][offset::interval].astype(float) - offset) / 60
 
     return [ts1, ls1, ts2, ls2]
 
@@ -101,14 +111,18 @@ class CollectCIELab100Cycles(luigi.Task):
     folder = luigi.Parameter()
 
     def output(self):
-        return [luigi.LocalTarget('../data/1-9cycles_new.csv'), luigi.LocalTarget('../data/93-100cycles_new.csv')]
+        return [
+            luigi.LocalTarget(os.path.join('data', '100cycles', self.name, '1-9cycles.csv')),
+            luigi.LocalTarget(os.path.join('data', '100cycles', self.name, '93-100cycles.csv')),
+        ]
 
     def requires(self):
         return MakeAllSlices(name=self.name, folder=self.folder)
 
     def run(self):
         os.chdir(os.path.dirname(__file__))
-        collect_all_cielab()
+        collect_all_cielab(self.output()[0].path)
+        collect_all_cielab(self.output()[1].path)
 
 
 class Plot100Cycles2(luigi.Task):
@@ -116,25 +130,36 @@ class Plot100Cycles2(luigi.Task):
     resources = {"matplotlib": 1}
 
     def requires(self):
-        return RawLValuesOfAllMovies(name='20161111', folder=
-            '/Volumes/ExtWork/Suda Electrochromism/20161111/')
+        return {
+            '1114': RawLValuesOfAllMovies(name='20161114', folder='/Volumes/ExtWork/Suda Electrochromism/20161114/',
+                                          mode='100cycles'),
+            '1115': RawLValuesOfAllMovies(name='20161115', folder='/Volumes/ExtWork/Suda Electrochromism/20161115/',
+                                          mode='100cycles')}
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig ' + self.name + '.pdf')]
+        return [luigi.LocalTarget('./dist/Fig ' + self.name + '_a.pdf'),
+                luigi.LocalTarget('./dist/Fig ' + self.name + '_b.pdf')]
 
     def run(self):
         set_common_format()
-        l_vs_t = get_l_vs_t(self.input()[0][0].path, self.input()[0][1].path)
-        plot_and_save(plot_l_vs_t(l_vs_t), self.name + "_a")
-        l_vs_t = get_l_vs_t(self.input()[1][0].path, self.input()[1][1].path)
-        plot_and_save(plot_l_vs_t(l_vs_t), self.name + "_b")
-        # plot_split_traces(l_vs_t)
+        names = ['1115', '1114']
+        for name, suf in zip(names, ['a', 'b', 'c', 'd']):
+            l_vs_t = get_l_vs_t(self.input()[name][0].path, self.input()[name][1].path, time_omitted=True)
+            t1, l1, t2, l2 = l_vs_t
+            plt.subplot(121)
+            plt.plot(t1, l1)
+            plt.ylim([0, 60])
+            plt.subplot(122)
+            plt.plot(t2, l2)
+            plt.ylim([0, 60])
+            plt.show()
+            plot_and_save(plot_l_vs_t(l_vs_t), str(self.name) + "_" + suf)
 
 
 if __name__ == "__main__":
     import os
 
-    os.chdir(os.path.dirname(__file__))
+    os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
     # cleanup(Plot100Cycles(name='3c'))
     # luigi.run(['Plot100Cycles', '--name', '3c'])
 
