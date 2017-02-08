@@ -4,9 +4,9 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets import Slider, Button, RadioButtons
-from util.util import ensure_folder_exists
+from util import ensure_folder_exists
 
-from src.data_tools import load_csv, save_csv
+from data_tools import load_csv, save_csv
 
 
 # Specify conditions chosen for analysis

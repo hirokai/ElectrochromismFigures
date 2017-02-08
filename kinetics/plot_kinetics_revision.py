@@ -7,8 +7,8 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-from kinetics import Kinetics, KineticsDataType, read_kinetics
-from data_tools import colors10
+from src.kinetics import Kinetics, KineticsDataType, read_kinetics
+from src.data_tools import colors10
 
 
 def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], label=None, show=False):

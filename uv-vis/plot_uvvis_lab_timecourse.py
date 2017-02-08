@@ -9,8 +9,8 @@ from scipy import stats
 
 from data_tools import colors10
 from luigi_tools import cleanup
-from src.figure_tools import plot_and_save
-from src.figure_tools import set_format, set_common_format
+from figure_tools import plot_and_save
+from figure_tools import set_format, set_common_format
 
 
 def plot_uvvis():

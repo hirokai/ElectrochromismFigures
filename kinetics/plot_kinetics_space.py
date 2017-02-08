@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MultipleLocator
 
-from data_tools import ambiguous_path, colors10
-from luigi_tools import cleanup
-from measure_cie_space import CollectCIESpace
+from src.data_tools import ambiguous_path, colors10
+from src.luigi_tools import cleanup
+from src.measure_cie_space import CollectCIESpace
 from src.figure_tools import plot_and_save, set_common_format
 
 

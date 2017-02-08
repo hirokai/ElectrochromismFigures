@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from . import Kinetics, KineticsDataType, read_kinetics
+from src.kinetics import Kinetics, KineticsDataType, read_kinetics
 from util.data_tools import colors10
 import os
 

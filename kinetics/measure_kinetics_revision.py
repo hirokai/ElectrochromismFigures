@@ -10,13 +10,13 @@ import luigi
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
-from data_tools import colors10, load_csv, save_csv
-from util import ensure_exists, ensure_folder_exists, basename_noext, bcolors
+from src.data_tools import colors10, load_csv, save_csv
+from src.util import ensure_exists, ensure_folder_exists, basename_noext, bcolors
 
-from kinetics.split import SplitTraces, split_all_traces, save_split_data
-from make_slices import mk_slices
-from measure_colorchart import MeasureLValuesOfColorCharts
-from image_tools import get_cie_l_rois
+from src.kinetics.split import SplitTraces, split_all_traces, save_split_data
+from src.make_slices import mk_slices
+from src.measure_colorchart import MeasureLValuesOfColorCharts
+from src.image_tools import get_cie_l_rois
 
 
 #

@@ -1,5 +1,5 @@
 #
-# Run in src folder.
+# Run in common folder.
 # python -m kinetics.split
 #
 

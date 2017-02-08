@@ -7,11 +7,11 @@ import sys
 import luigi
 import matplotlib.pyplot as plt
 import numpy as np
-from image_tools import get_cie_rois
+from src.image_tools import get_cie_rois
 from skimage import color
 from skimage import io
 
-from util import basename_noext, ensure_folder_exists
+from src.util import basename_noext, ensure_folder_exists
 
 
 class RectROI:

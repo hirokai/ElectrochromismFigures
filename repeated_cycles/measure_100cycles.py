@@ -1,7 +1,7 @@
 import os
 import luigi
-from measure_kinetics_revision import all_measure_cielab
-from make_slices import all_make_slices
+from src.measure_kinetics_revision import all_measure_cielab
+from src.make_slices import all_make_slices
 
 
 # FIXME: Need to be updated to use the latest version of analysis.

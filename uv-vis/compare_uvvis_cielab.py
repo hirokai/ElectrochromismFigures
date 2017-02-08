@@ -9,10 +9,10 @@ import luigi
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from image_tools import get_cie_rois
+from src.image_tools import get_cie_rois
 
-from measure_colorchart import read_csv, measure_color_chart
-from test_calibration import calc_calibration_scales
+from src.measure_colorchart import read_csv, measure_color_chart
+from src.test_calibration import calc_calibration_scales
 
 
 # Get absorbance at `wl` nm wavelength from .txt data file.

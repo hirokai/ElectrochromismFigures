@@ -1,13 +1,15 @@
-import luigi
 import os
+
+import luigi
+from cyclic_voltammetry.measure_and_plot_ox_current import PlotOxCurrent
+from cyclic_voltammetry.plot_cv import PlotCV
+from film_thickness.plot_thickness import PlotThickness
+from final_colors.plot_final_colors import PlotFinalColors
+
 from plot_100cycles import Plot100Cycles
 from plot_kinetics import PlotOxTrace, PlotRateConstants
-from plot_final_colors import PlotFinalColors
 from plot_kinetics_space import PlotCIESpace
 from plot_uvvis_lab_timecourse import PlotUVVisTimeCIELab
-from plot_cv import PlotCV
-from plot_thickness import PlotThickness
-from measure_and_plot_ox_current import PlotOxCurrent
 
 
 class AllFigures(luigi.WrapperTask):

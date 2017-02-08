@@ -3,7 +3,7 @@ import numpy as np
 from scipy import optimize
 import matplotlib.pyplot as plt
 import os
-from util import sort_with_order
+from src.util import sort_with_order
 
 
 def calc_calibration_scales(all_vs, vs, debug=False):

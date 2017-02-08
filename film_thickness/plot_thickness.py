@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from data_tools import colors10
+from src.data_tools import colors10
 from src.figure_tools import plot_and_save, set_common_format
 
 

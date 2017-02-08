@@ -16,10 +16,10 @@ from figure_tools import plot_and_save, set_common_format
 def plot_final_colors(input_path):
     def func():
         fig, ax = plt.subplots(figsize=(4.5, 3))
-        majorLocator = MultipleLocator(0.4)
-        minorLocator = MultipleLocator(0.1)
-        ax.xaxis.set_major_locator(majorLocator)
-        ax.xaxis.set_minor_locator(minorLocator)
+        major_locator = MultipleLocator(0.4)
+        minor_locator = MultipleLocator(0.1)
+        ax.xaxis.set_major_locator(major_locator)
+        ax.xaxis.set_minor_locator(minor_locator)
         df = pd.read_csv(input_path)
 
         # pedot80 = df[df['PEDOT ratio'] == 80]
@@ -27,7 +27,8 @@ def plot_final_colors(input_path):
 
         def get(df, v):
             df2 = df[df['PEDOT ratio'] == v][df['skip'] != 1]
-            df2 = pd.concat([df2[df2['voltage'] > 0][df2['mode'] == 'ox'], df2[df2['voltage'] <= 0][df2['mode'] == 'red']])
+            df2 = pd.concat(
+                [df2[df2['voltage'] > 0][df2['mode'] == 'ox'], df2[df2['voltage'] <= 0][df2['mode'] == 'red']])
             return df2
 
         ratios = [20, 40, 60, 80]
@@ -41,7 +42,8 @@ def plot_final_colors(input_path):
         perrs = []
         for i, pedot in enumerate(pedots):
             plt.scatter(pedot['voltage'], pedot['L_f'], c=colors10[i], lw=0, s=25)
-            popt, pcov = curve_fit(sigmoid, pedot['voltage'], pedot['L_f'], [0, 0.2, min(pedot['L_f']), max(pedot['L_f'])])
+            popt, pcov = curve_fit(sigmoid, pedot['voltage'], pedot['L_f'],
+                                   [0, 0.2, min(pedot['L_f']), max(pedot['L_f'])])
             x = np.linspace(-1, 1, 100)
             perr = np.sqrt(np.diag(pcov))
             print popt, perr
@@ -54,6 +56,7 @@ def plot_final_colors(input_path):
         ys = [p[0] for p in popts]
         es = [p[0] for p in perrs]
         return ys, es
+
     return func
 
 
@@ -70,6 +73,7 @@ def redox_potentials(ys, es):
         plt.ylim([0, 0.2])
         ax.yaxis.set_major_locator(MultipleLocator(0.1))
         ax.yaxis.set_minor_locator(MultipleLocator(0.02))
+
     return func
 
 
@@ -81,13 +85,13 @@ class PlotFinalColors(luigi.Task):
         return CurveFitStub()
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig ' + self.name1 + '.pdf'),
-                luigi.LocalTarget('../dist/Fig ' + self.name2 + '.pdf')]
+        return [luigi.LocalTarget('dist/Fig ' + self.name1 + '.pdf'),
+                luigi.LocalTarget('dist/Fig ' + self.name2 + '.pdf')]
 
     def run(self):
         set_common_format()
-        ys, es = plot_and_save(plot_final_colors(self.input().path),self.name1)
-        plot_and_save(redox_potentials(ys, es),self.name2)
+        ys, es = plot_and_save(plot_final_colors(self.input().path), self.name1)
+        plot_and_save(redox_potentials(ys, es), self.name2)
 
 
 class FinalColorsTest(luigi.WrapperTask):
