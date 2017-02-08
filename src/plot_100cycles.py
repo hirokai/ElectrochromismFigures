@@ -1,15 +1,16 @@
+import re
 import luigi
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MultipleLocator
 from scipy.optimize import curve_fit
 
-from util import bcolors
+from util import bcolors, basename_noext
 from data_tools import split_trace, save_csv, load_csv
 from image_tools import do_cie_analysis
 from luigi_tools import cleanup
 from figure_tools import plot_and_save, set_common_format
-from measure_kinetics_revision import MakeAllSlices, RawLValuesOfSingleMovie, RawLValuesOfAllMovies
+from measure_kinetics_revision import MakeAllSlices, RawLValuesOfSingleMovie, RawLValuesOfAllMovies, read_rois_simple
 from measure_100cycles import MeasureAll100Cycles
 
 
@@ -125,16 +126,39 @@ class CollectCIELab100Cycles(luigi.Task):
         collect_all_cielab(self.output()[1].path)
 
 
+class MovieWithROI():
+    def __init__(self, movie_relpath, roi_path=None, movie_root=None):
+        if movie_root is None:
+            movie_root = os.path.join('/Volumes', 'ExtWork', 'Suda Electrochromism')
+        self.movie_relpath = os.path.join(movie_root, movie_relpath)
+        if roi_path is None:
+            self.roi_path = os.path.join('parameters', movie_relpath.split(os.sep)[0], 'sample rois.csv')
+        else:
+            self.roi_path = roi_path
+
+    def read_roi(self):
+        n = os.path.basename(self.movie_relpath)[4:8]
+        if n is None or not re.match(r"""\d+""", n):
+            n = basename_noext(self.roi_path)
+        obj = read_rois_simple(self.roi_path)
+        print('MovieWithROI.read_roi(): ', obj)
+        return ','.join(map(str, obj[n][0]))
+
+
 class Plot100Cycles2(luigi.Task):
     name = luigi.Parameter()
     resources = {"matplotlib": 1}
 
     def requires(self):
-        return {
-            '1114': RawLValuesOfAllMovies(name='20161114', folder='/Volumes/ExtWork/Suda Electrochromism/20161114/',
-                                          mode='100cycles'),
-            '1115': RawLValuesOfAllMovies(name='20161115', folder='/Volumes/ExtWork/Suda Electrochromism/20161115/',
-                                          mode='100cycles')}
+        datasets = {'20161114': [MovieWithROI('20161114/MVI_7984.MOV'), MovieWithROI('20161114/MVI_7985.MOV')],
+                    '20161115': [MovieWithROI('20161115/MVI_8020.MOV'), MovieWithROI('20161115/MVI_8021.MOV')]}
+        obj = {}
+        for k, v in datasets.iteritems():
+            obj[k + '_0'] = RawLValuesOfSingleMovie(name=k, path=v[0].movie_relpath, roi=v[0].read_roi(),
+                                                    mode='100cycles')
+            obj[k + '_1'] = RawLValuesOfSingleMovie(name=k, path=v[1].movie_relpath, roi=v[1].read_roi(),
+                                                    mode='100cycles')
+        return obj
 
     def output(self):
         return [luigi.LocalTarget('./dist/Fig ' + self.name + '_a.pdf'),
@@ -142,17 +166,20 @@ class Plot100Cycles2(luigi.Task):
 
     def run(self):
         set_common_format()
-        names = ['1115', '1114']
+        names = ['20161115', '20161114']
         for name, suf in zip(names, ['a', 'b', 'c', 'd']):
-            l_vs_t = get_l_vs_t(self.input()[name][0].path, self.input()[name][1].path, time_omitted=True)
-            t1, l1, t2, l2 = l_vs_t
-            plt.subplot(121)
-            plt.plot(t1, l1)
-            plt.ylim([0, 60])
-            plt.subplot(122)
-            plt.plot(t2, l2)
-            plt.ylim([0, 60])
-            plt.show()
+            l_vs_t = get_l_vs_t(self.input()[name+'_0'].path, self.input()[name+'_1'].path, time_omitted=True)
+            testing = False
+            if testing:
+                t1, l1, t2, l2 = l_vs_t
+                plt.subplot(121)
+                plt.plot(t1, l1)
+                plt.ylim([0, 60])
+                plt.subplot(122)
+                plt.plot(t2, l2)
+                plt.ylim([0, 60])
+                plt.show()
+            # なぜかこれでプロットが見えない。枠だけ見える。
             plot_and_save(plot_l_vs_t(l_vs_t), str(self.name) + "_" + suf)
 
 

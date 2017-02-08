@@ -44,7 +44,7 @@ def read_rois(path):
     return obj
 
 
-def read_rois_sample(path):
+def read_rois_simple(path):
     with open(path) as f:
         reader = csv.reader(f)
         _ = reader.next()  # Skip first row
@@ -148,7 +148,9 @@ class RawLValuesOfSingleMovie(luigi.Task):
             print "No ROI"
         else:
             max_timepoints = 10000 if self.mode == '100cycles' else 1000
-            rois = list(grouper(4, [int(s) for s in str(self.roi).split(',')]))
+            rois_flatten = [int(s) for s in str(self.roi).split(',')]
+            assert len(rois_flatten) % 4 == 0, 'ROI must have 4 int values'
+            rois = list(grouper(4, rois_flatten))
             lss = measure_movie_slices(folder_path, rois, max_timepoints=max_timepoints)
             ensure_folder_exists(self.output().path)
             np.savetxt(self.output().path, lss.transpose(), delimiter=",")
@@ -184,7 +186,7 @@ class RawLValuesOfAllMovies(luigi.Task):
         movie_files = sorted(filter(test, [os.path.join(self.folder, n) for n in os.listdir(self.folder)]))
         # print(movie_files)
         roi_path = 'parameters/%s/sample rois.csv' % self.name
-        rois = read_rois_sample(roi_path)
+        rois = read_rois_simple(roi_path)
         print('ROIs:', rois)
 
         def mk(f):

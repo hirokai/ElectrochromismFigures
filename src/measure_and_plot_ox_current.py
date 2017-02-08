@@ -12,7 +12,7 @@ from scipy.stats import linregress
 
 from data_tools import colors10
 from luigi_tools import cleanup
-from src.figure_tools import plot_and_save, set_common_format
+from figure_tools import plot_and_save, set_common_format
 
 
 def split_cv_cycle(xs, x_min=None, x_max=None):
@@ -115,7 +115,7 @@ def read_raw_data(files, thickness_table):
     data_series = []
     instrument = None
     for n in files:
-        path = os.path.join('..', 'data', 'cv', n)
+        path = os.path.join('data', 'cv', n)
         with open(path) as f:
             while True:
                 l = f.readline()
@@ -203,7 +203,7 @@ def measure_and_plot_ox_current():
     currents = np.array(map(lambda a: a[2], results)) * 1e6  # in microA
     thickness_for_plot = np.array(map(lambda a: a[2], data_series)) * 1e-3  # in um
     used = np.array([True] * currents.shape[0])
-    used[3] = False
+    # used[3] = False
     plt.scatter(thickness_for_plot, currents, facecolor=map(lambda a: colors10[0] if a else 'r', used), s=25, lw=0)
     used_y = currents[used]
     used_x = thickness_for_plot[used]
@@ -238,8 +238,8 @@ class PlotOxCurrent(luigi.Task):
         return []
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig ' + self.name1 + '.pdf'),
-                luigi.LocalTarget('../dist/Fig ' + self.name2 + '.pdf')]
+        return [luigi.LocalTarget('./dist/Fig ' + self.name1 + '.pdf'),
+                luigi.LocalTarget('./dist/Fig ' + self.name2 + '.pdf')]
 
     def run(self):
         set_common_format()
@@ -248,9 +248,9 @@ class PlotOxCurrent(luigi.Task):
 
 
 if __name__ == "__main__":
-    os.chdir(os.path.dirname(__file__))
+    os.chdir(os.path.join(os.path.dirname(__file__),os.pardir))
     # cleanup(PlotOxCurrent(name1='S3',name2='2b-inset'))
     # luigi.run(['PlotOxCurrent','--name1','S3','--name2','2b-inset'])
-    plot_and_save(measure_and_plot_ox_current, 'cv_thickness_revision')
+    plot_and_save(measure_and_plot_ox_current, 'cv_thickness_revision',show=True)
     # cleanup(PlotOxCurrent(name1='cv_thickness_revision', name2='cv_thickness_revision_inset'))
     # luigi.run(['PlotOxCurrent', '--name1', 'cv_thickness_revision', '--name2', 'cv_thickness_revision_inset'])

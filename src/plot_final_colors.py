@@ -10,7 +10,7 @@ from scipy.optimize import curve_fit
 from data_tools import colors10
 from luigi_tools import cleanup
 from pedot_voltage_conditions import CurveFitStub
-from src.figure_tools import plot_and_save, set_common_format
+from figure_tools import plot_and_save, set_common_format
 
 
 def plot_final_colors(input_path):

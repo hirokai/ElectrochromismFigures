@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from kinetics import Kinetics, KineticsDataType, read_kinetics
-from src.data_tools import colors10
+from data_tools import colors10
 
 
 def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], label=None, show=False):
@@ -17,8 +17,15 @@ def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], lab
         ps = [20, 30, 40, 60, 80]
         d = {p: dat.get_data(p, rpm, mode, voltage) for p in ps}
     elif variable == 'rpm':
-        rs = [500, 1000, 2000, 3000, 4000, 5000]
-        d = {r: dat.get_data(pedot, r, mode, voltage) for r in rs}
+        # rs = [500, 1000, 2000, 3000, 4000, 5000]
+        rs = [500, 1000, 5000]
+        d1 = {r: dat.get_data(pedot, r, mode, voltage) for r in rs}
+        th = {500: 5.4, 1000: 4.2, 2000: 3.0, 3000: 2.8, 4000: 2.9, 5000: 2.8}  # 30perc PEDOT
+        # th = {500: 7.0, 1000: 4.2, 2000: 3.7, 3000: 4.0, 4000: 3.1, 5000: 2.9}  # 20perc PEDOT
+        d = {}
+        print(d1)
+        for k, v in d1.iteritems():
+            d[th[k]] = v
     elif variable == 'mode':
         ms = ['const', 'ox', 'red']
         d = {m: dat.get_data(pedot, rpm, m, voltage) for m in ms}
@@ -50,14 +57,20 @@ def main():
     os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
 
     dat = read_kinetics(KineticsDataType.RateConstant)
-    plt.figure(figsize=(10, 10))
-    for i, pedot in enumerate([20, 30, 40, 60, 80]):
+    plt.figure(figsize=(6, 4))
+    # plt.figure(figsize=(10, 10))
+    for i, pedot in enumerate([30]):
+        # for i, pedot in enumerate([20, 30, 40, 60, 80]):
         plot_series(dat,
                     'rpm', pedot, None, 'ox', 0.8, color=colors10[i], label='%d perc PEDOT' % pedot)
-    plt.title('Varied PEDOT and rpm, ox, 0.8 V')
+    # plt.title('Varied PEDOT and rpm, ox, 0.8 V')
     plt.legend(loc='upper right')
     plt.ylim([0, 1.2])
+    plt.xlim([0,8])
+    plt.xlabel('Thickness [um]')
+    plt.savefig('20170201.pdf')
     plt.show()
+    return
 
     plt.figure(figsize=(10, 10))
     for i, voltage in enumerate([0.2, 0.4, 0.6, 0.8]):
