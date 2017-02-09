@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import optimize
 
-from data_tools import colors10
-from util import ensure_folder_exists
-from util import sort_with_order
+from common.data_tools import colors10
+from common.util import ensure_folder_exists
+from common.util import sort_with_order
 
 
 def correct_cielab(in_csv, scale_csv, out_csv):

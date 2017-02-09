@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.optimize import curve_fit
 
-from luigi_tools import cleanup
-from data_tools import *
+from common.luigi_tools import cleanup
+from common.data_tools import *
+from common.util import *
 
 #
 # Parameters for curve fitting
@@ -204,7 +205,7 @@ class CollectCIELabStub(luigi.Task):
 class CurveFitStub(luigi.Task):
     def output(self):
         return luigi.LocalTarget(
-            '../data/curvefit_external.csv')
+            './data/curvefit_external.csv')
 
 
 class CurveFit(luigi.Task):
@@ -220,8 +221,6 @@ class CurveFit(luigi.Task):
 
 
 if __name__ == "__main__":
-    import os
-
-    os.chdir(os.path.dirname(__file__))
+    chdir_root()
     cleanup(CurveFit())
     luigi.run(['CurveFit'])

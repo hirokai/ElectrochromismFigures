@@ -7,10 +7,11 @@ import pandas as pd
 from matplotlib.ticker import MultipleLocator
 from scipy.optimize import curve_fit
 
-from data_tools import colors10
-from luigi_tools import cleanup
+from common.util import chdir_root
+from common.data_tools import colors10
+from common.luigi_tools import cleanup
 from pedot_voltage_conditions import CurveFitStub
-from figure_tools import plot_and_save, set_common_format
+from common.figure_tools import plot_and_save, set_common_format
 
 
 def plot_final_colors(input_path):
@@ -100,6 +101,6 @@ class FinalColorsTest(luigi.WrapperTask):
 
 
 if __name__ == "__main__":
-    os.chdir(os.path.dirname(__file__))
+    chdir_root()
     cleanup(PlotFinalColors(name1='4b', name2='S4'))
     luigi.run(['FinalColorsTest'])

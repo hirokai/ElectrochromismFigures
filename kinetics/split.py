@@ -3,12 +3,10 @@
 # python -m kinetics.split
 #
 
-
-
 import cPickle as pickle
-from data_tools import colors10, split_trace, load_csv, save_csv
+from common.data_tools import colors10, split_trace, load_csv, save_csv
 import os
-from util import ensure_exists, ensure_folder_exists, basename_noext, bcolors
+from common.util import ensure_exists, ensure_folder_exists, basename_noext, bcolors
 import csv
 
 

@@ -3,12 +3,11 @@
 #
 
 import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.kinetics import Kinetics, KineticsDataType, read_kinetics
-from src.data_tools import colors10
+from kinetics import Kinetics, KineticsDataType, read_kinetics
+from common.data_tools import colors10
 
 
 def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], label=None, show=False):
@@ -70,7 +69,6 @@ def main():
     plt.xlabel('Thickness [um]')
     plt.savefig('20170201.pdf')
     plt.show()
-    return
 
     plt.figure(figsize=(10, 10))
     for i, voltage in enumerate([0.2, 0.4, 0.6, 0.8]):

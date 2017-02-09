@@ -7,10 +7,9 @@ import numpy as np
 from matplotlib.ticker import MultipleLocator
 from scipy import stats
 
-from data_tools import colors10
-from luigi_tools import cleanup
-from figure_tools import plot_and_save
-from figure_tools import set_format, set_common_format
+from common.data_tools import colors10
+from common.luigi_tools import cleanup
+from common.figure_tools import plot_and_save, set_format, set_common_format
 
 
 def plot_uvvis():

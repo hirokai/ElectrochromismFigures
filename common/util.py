@@ -81,3 +81,7 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+
+
+def chdir_root():
+    os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
