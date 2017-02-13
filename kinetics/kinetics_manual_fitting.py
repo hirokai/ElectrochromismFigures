@@ -15,11 +15,13 @@ def recursive_walk(folder):
     for root, dirnames, filenames in os.walk(folder):
         for filename in fnmatch.filter(filenames, '*.csv'):
             matches.append(os.path.join(root, filename))
-    return [m for m in matches if m.find('red') != -1 and
-            # m.find('30 perc') != -1 and
-            # m.find('0.8') != -1 and
-            # not m.find('const -0.5') != -1 and
-            not os.path.exists(get_out_path(m))]
+    return [m for m in matches if m.find('red') != -1
+            # and
+            and m.find('2000 rpm') != -1
+            # # m.find('0.8') != -1 and
+            # # not m.find('const -0.5') != -1 and
+            # not os.path.exists(get_out_path(m))
+            ]
 
 
 def get_out_path(in_path):

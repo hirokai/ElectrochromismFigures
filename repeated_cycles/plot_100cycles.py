@@ -132,7 +132,7 @@ class MovieWithROI():
             movie_root = os.path.join('/Volumes', 'ExtWork', 'Suda Electrochromism')
         self.movie_relpath = os.path.join(movie_root, movie_relpath)
         if roi_path is None:
-            self.roi_path = os.path.join('parameters', movie_relpath.split(os.sep)[0], 'sample rois.csv')
+            self.roi_path = os.path.join('parameters', movie_relpath.split(os.sep)[0], 'sample sample rois.csv')
         else:
             self.roi_path = roi_path
 

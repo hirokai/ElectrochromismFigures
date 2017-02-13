@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+from util import ensure_exists
 
 
 #
@@ -22,7 +23,7 @@ def save_csv(path, rows):
     import csv
 
     folder = os.path.dirname(path)
-    src.util.ensure_exists(folder)
+    ensure_exists(folder)
 
     with open(path, 'wb') as f:
         writer = csv.writer(f)
@@ -30,7 +31,7 @@ def save_csv(path, rows):
             writer.writerow(map(str, row))
 
 
-def load_csv(path, skip_rows=0,numpy=False):
+def load_csv(path, skip_rows=0, numpy=False):
     import csv
 
     def may_float(s):
@@ -50,6 +51,13 @@ def load_csv(path, skip_rows=0,numpy=False):
             return r
 
 
+def mk_dict(rows):
+    d = {}
+    for row in rows:
+        d[row[0]] = rows[1:]
+    return d
+
+
 #
 # Table data processing
 #
@@ -63,7 +71,6 @@ def test_split():
 
 
 def split_trace(ts_o, ys_o, split_t):
-    # For oxidation
     ts = np.array(ts_o)
     ys = np.array(ys_o)
     assert (len(ts) == len(ys))

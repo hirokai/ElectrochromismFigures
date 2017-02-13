@@ -8,6 +8,7 @@ import numpy as np
 
 from kinetics import Kinetics, KineticsDataType, read_kinetics
 from common.data_tools import colors10
+from common.util import chdir_root, ensure_folder_exists
 
 
 def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], label=None, show=False):
@@ -53,7 +54,7 @@ def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], lab
 
 
 def main():
-    os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
+    chdir_root()
 
     dat = read_kinetics(KineticsDataType.RateConstant)
     plt.figure(figsize=(6, 4))
@@ -65,9 +66,11 @@ def main():
     # plt.title('Varied PEDOT and rpm, ox, 0.8 V')
     plt.legend(loc='upper right')
     plt.ylim([0, 1.2])
-    plt.xlim([0,8])
+    plt.xlim([0, 8])
     plt.xlabel('Thickness [um]')
-    plt.savefig('20170201.pdf')
+    outpath = os.path.join(os.path.dirname(__file__), 'dist', '20170201.pdf')
+    ensure_folder_exists(outpath)
+    plt.savefig(outpath)
     plt.show()
 
     plt.figure(figsize=(10, 10))

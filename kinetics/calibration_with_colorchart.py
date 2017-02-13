@@ -7,8 +7,7 @@ import numpy as np
 from scipy import optimize
 
 from common.data_tools import colors10
-from common.util import ensure_folder_exists
-from common.util import sort_with_order
+from common.util import ensure_folder_exists, sort_with_order, chdir_root, ensure_exists, bcolors
 
 
 def correct_cielab(in_csv, scale_csv, out_csv):
@@ -70,13 +69,11 @@ def calibration(colorcharts):
     return np.array(calibrated), ks
 
 
-def get_outpath(s):
-    return s.replace('colorchart', 'correction')
-
-
-def main():
+def calc_calibration_factor(name, folder):
+    base_folder = os.path.join('data', 'kinetics', 'correction', name)
+    ensure_exists(base_folder)
     os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
-    files = glob.glob(os.path.join('data', 'kinetics', 'colorchart', '20161019', '*.csv'))
+    files = glob.glob(os.path.join('data', 'kinetics', 'colorchart', name, '*.csv'))
     print('%d files.' % len(files))
     lsss = read_l_values(files)
     # for lss in lsss:
@@ -87,13 +84,15 @@ def main():
     calibrated, factors = calibration(colorcharts)
     count = 0
     for in_path, lss in zip(files, lsss):
-        outpath = get_outpath(in_path)
+        outpath = in_path.replace('colorchart', 'correction')
         ensure_folder_exists(outpath)
         with open(outpath, 'wb') as f:
             writer = csv.writer(f)
             for i in range(len(lss)):
-                writer.writerow([i+1,factors[count]])
+                writer.writerow([i + 1, factors[count]])
                 count += 1
+                # print('Written to: %s' % outpath)
+    # print(bcolors.OKGREEN + 'Written in %d files' % len(files) + bcolors.ENDC)
     return
     plt.subplot(3, 1, 1)
     ls_mean_for_plot = np.repeat([ls_mean], colorcharts.shape[0], axis=0).transpose()
@@ -122,5 +121,10 @@ def main():
     plt.show()
 
 
+def main():
+    calc_calibration_factor('20160512-13', None)
+
+
 if __name__ == "__main__":
+    chdir_root()
     main()

@@ -186,8 +186,8 @@ class MeasureColorCharts(luigi.Task):
 
     def run(self):
         imgs = 'parameters/%s/list of images.txt' % self.name
-        sample_roi = 'parameters/%s/sample rois.csv' % self.name
-        cal_roi = 'parameters/%s/calibration rois.csv' % self.name
+        sample_roi = 'parameters/%s/sample sample rois.csv' % self.name
+        cal_roi = 'parameters/%s/calibration sample rois.csv' % self.name
         uvvis = 'parameters/%s/list of uvvis.txt' % self.name
         measure_all(imgs, sample_roi, cal_roi, uvvis, self.output()['sample'].path,
                     self.output()['calibration'].path,

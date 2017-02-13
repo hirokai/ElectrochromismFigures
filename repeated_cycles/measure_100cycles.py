@@ -28,7 +28,7 @@ class RawLValues100Cycles(luigi.Task):
         return luigi.LocalTarget(os.path.join('data', '100cycles', '%s all_l_values.csv' % self.name))
 
     def run(self):
-        roi_path = 'parameters/%s/sample rois.csv' % self.name
+        roi_path = 'parameters/%s/sample sample rois.csv' % self.name
         all_measure_cielab(self.folder, roi_path, self.output().path, max_timepoints=2000)
 
 

@@ -10,13 +10,16 @@ import luigi
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
-from src.data_tools import colors10, load_csv, save_csv
-from src.util import ensure_exists, ensure_folder_exists, basename_noext, bcolors
 
-from src.kinetics.split import SplitTraces, split_all_traces, save_split_data
-from src.make_slices import mk_slices
-from src.measure_colorchart import MeasureLValuesOfColorCharts
-from src.image_tools import get_cie_l_rois
+from common.data_tools import colors10, load_csv, save_csv
+from common.util import ensure_exists, ensure_folder_exists, basename_noext, bcolors, chdir_root, grouper, flatten
+
+from common.make_slices import mk_slices
+from common.image_tools import get_cie_l_rois
+from kinetics.split import SplitTraces, split_all_traces, save_split_data
+from measure_colorchart import MeasureLValuesOfColorCharts
+from split import read_sample_conditions, read_all_split_traces
+from calibration_with_colorchart import calc_calibration_factor
 
 
 #
@@ -29,9 +32,13 @@ def mk_condition_name(c):
 
 # Read multiple ROIs for a single movie (in which multiple samples exist in the same movie).
 def read_rois(path):
-    with open(path) as f:
+    with open(path, 'rU') as f:
         reader = csv.reader(f)
-        _ = reader.next()  # Skip first row
+        first_row = reader.next()
+        i_bx = first_row.index('BX')
+        i_by = first_row.index('BY')
+        i_width = first_row.index('Width')
+        i_height = first_row.index('Height')
         obj = {}
         current_num = None
         for row in reader:
@@ -40,12 +47,17 @@ def read_rois(path):
             else:
                 if current_num not in obj:
                     obj[current_num] = []
-                obj[current_num].append(map(int, row[7:11]))
+                bx = row[i_bx]
+                by = row[i_by]
+                w = row[i_width]
+                h = row[i_height]
+                obj[current_num].append(map(int, [bx, by, w, h]))
     return obj
 
 
+# Read ROIS for movies, where each movie has one sample.
 def read_rois_simple(path):
-    with open(path) as f:
+    with open(path, 'rU') as f:
         reader = csv.reader(f)
         _ = reader.next()  # Skip first row
         obj = {}
@@ -60,7 +72,10 @@ def read_rois_simple(path):
 # Making slices
 #
 
-# For testing only.
+
+# Make slices for all movies in `folder`.
+# For testing.
+# This can also be used for making slices to determine ROIs.
 # Actual measurement invokes MakeSingleMovieSlices instead.
 class MakeAllSlices(luigi.WrapperTask):
     name = luigi.Parameter()
@@ -93,7 +108,7 @@ class MakeSingleMovieSlices(luigi.Task):
 def measure_movie_slices(folder_path, roi_samples, max_timepoints=1000, rois_calibration=None):
     print(bcolors.OKGREEN + 'Measuring slices: ' + folder_path + bcolors.ENDC)
     files = sorted(os.listdir(folder_path))
-    lss = np.zeros((3, max_timepoints))
+    lss = np.zeros((len(roi_samples), max_timepoints))
     for i, name in enumerate(files):
         path = os.path.join(folder_path, name)
         if i % 10 == 0:
@@ -141,13 +156,14 @@ class RawLValuesOfSingleMovie(luigi.Task):
         return MakeSingleMovieSlices(path=self.path)
 
     def run(self):
+        assert self.mode == '100cycles' or self.mode == 'kinetics'
         print('%s' % self.path)
         folder_path = os.path.join(os.path.dirname(self.path), 'slices', basename_noext(self.path))
         print(self.roi)
         if self.roi == '':
             print "No ROI"
         else:
-            max_timepoints = 10000 if self.mode == '100cycles' else 1000
+            max_timepoints = 10000 if self.mode == '100cycles' else 2000
             rois_flatten = [int(s) for s in str(self.roi).split(',')]
             assert len(rois_flatten) % 4 == 0, 'ROI must have 4 int values'
             rois = list(grouper(4, rois_flatten))
@@ -163,38 +179,29 @@ class RawLValuesOfSingleMovie(luigi.Task):
                                               self.name, "%s.csv" % basename_noext(self.path)))
 
 
-# http://stackoverflow.com/questions/4998427/how-to-group-elements-in-python-by-n-elements
-def grouper(n, iterable, fillvalue=None):
-    """grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx"""
-    args = [iter(iterable)] * n
-    return itertools.izip_longest(fillvalue=fillvalue, *args)
-
-
-def flatten(vs):
-    return reduce(lambda a, b: a + b, vs)
-
-
 class RawLValuesOfAllMovies(luigi.Task):
     name = luigi.Parameter()
     folder = luigi.Parameter()
     mode = luigi.Parameter()
 
     def requires(self):
-        def test(p):
-            return os.path.isfile(p) and p[-4:].lower() == '.mov'
+        assert self.mode == '100cycles' or self.mode == 'kinetics'
 
-        movie_files = sorted(filter(test, [os.path.join(self.folder, n) for n in os.listdir(self.folder)]))
+        names = get_movie_list(self.name)
+        movie_files = [os.path.join(self.folder, n) for n in names]
         # print(movie_files)
-        roi_path = 'parameters/%s/sample rois.csv' % self.name
-        rois = read_rois_simple(roi_path)
-        print('ROIs:', rois)
+        roi_path = os.path.join('parameters', self.name, 'sample rois.csv')
+        rois = read_rois(roi_path)
 
         def mk(f):
             n = os.path.basename(f)[4:8]
             if n is None or not re.match(r"""\d+""", n):
                 n = basename_noext(f)
-            print('RawLValuesOfAllMovies: basename = %s' % n)
+            # print('RawLValuesOfAllMovies: basename = %s' % n)
             r = rois.get(n)
+            if r is None:
+                n = basename_noext(f)
+                r = rois.get(n)
             if r is not None:
                 return ','.join(map(str, flatten(r)))
             else:
@@ -214,16 +221,39 @@ class RawLValuesOfAllMovies(luigi.Task):
 
 def correct_cielab(in_csvs, correction_csvs, out_csvs):
     assert all([isinstance(a, luigi.LocalTarget) for a in in_csvs])
-    assert all([os.path.isfile(a) for a in correction_csvs])
+    assert all([isinstance(a, luigi.LocalTarget) for a in correction_csvs])
     assert all([isinstance(a, luigi.LocalTarget) for a in out_csvs])
 
+    print('correct_cielab()', len(in_csvs), len(correction_csvs), len(out_csvs))
+    assert len(in_csvs) == len(correction_csvs) == len(out_csvs)
+
     for f1, p2, f3 in zip(in_csvs, correction_csvs, out_csvs):
-        # print(f1.path,p2,f3.path)
-        factor = load_csv(p2, numpy=True)[:, 1]
+        print('correct_cielab():', f1.path, p2.path, f3.path)
+        factor = load_csv(p2.path, numpy=True)[:, 1]
         raw = load_csv(f1.path, numpy=True)[0:len(factor), :]
-        corrected = raw.transpose() * np.repeat([factor], 3, axis=0)
+        print(raw.shape)
+        corrected = raw.transpose() * np.repeat([factor], raw.shape[1], axis=0)
         ensure_folder_exists(f3.path)
         save_csv(f3.path, np.transpose(corrected))
+
+
+class CalcCorrectionValues(luigi.Task):
+    name = luigi.Parameter()
+    folder = luigi.Parameter()
+
+    def requires(self):
+        return MeasureLValuesOfColorCharts(name=self.name, folder=self.folder)
+
+    def output(self):
+        return [luigi.LocalTarget(t.path.replace('colorchart', 'correction')) for t in self.input()]
+
+    def run(self):
+        calc_calibration_factor(self.name, self.folder)
+
+
+def get_movie_list(name):
+    dat = np.array(load_csv(os.path.join('parameters', name, 'movie_conditions.csv')))
+    return list(dat[1:, 0])
 
 
 class CorrectedLValuesOfAllMovies(luigi.Task):
@@ -231,23 +261,20 @@ class CorrectedLValuesOfAllMovies(luigi.Task):
     folder = luigi.Parameter()
 
     def requires(self):
-        return [RawLValuesOfAllMovies(name=self.name, folder=self.folder),
-                MeasureLValuesOfColorCharts(name=self.name,
-                                            folder=self.folder,
-                                            roipath=os.path.join('parameters', self.name, 'calibration_rois.csv'))
+        return [RawLValuesOfAllMovies(name=self.name, folder=self.folder, mode='kinetics'),
+                CalcCorrectionValues(name=self.name, folder=self.folder)
                 ]
 
     def output(self):
-        names = os.listdir(os.path.join('data', 'kinetics', 'raw', self.name))
+        names = get_movie_list(self.name)
+        print(names)
         return [luigi.LocalTarget(
-            os.path.join('data', 'kinetics', 'corrected', self.name, n)) for n
+            os.path.join('data', 'kinetics', 'corrected', self.name, basename_noext(n) + '.csv')) for n
                 in names]
 
     def run(self):
-        base_folder = os.path.join('data', 'kinetics', 'correction', self.name)
-        correction_value_csvs = [os.path.join(base_folder, n) for n in os.listdir(base_folder) if
-                                 n.find('_1.csv') != -1]
-        correct_cielab(self.input()[0], correction_value_csvs, self.output())
+        print('Running correct_cielab()...')
+        correct_cielab(self.input()[0], self.input()[1], self.output())
 
 
 #
@@ -264,7 +291,8 @@ class SplitAllTraces(luigi.Task):
     def run(self):
         movie_conditions_csv = os.path.join('parameters', self.name, 'movie_conditions.csv')
         sample_conditions_csv = os.path.join('parameters', self.name, 'sample_conditions.csv')
-        split_dat = split_all_traces([f.path for f in self.input()], movie_conditions_csv, sample_conditions_csv)
+        split_dat = split_all_traces(self.name, [f.path for f in self.input()], movie_conditions_csv,
+                                     sample_conditions_csv)
         assert isinstance(split_dat, SplitTraces)
         save_split_data(split_dat, self.name, self.output().path)
 
@@ -537,18 +565,29 @@ class MeasureAndPlotAll(luigi.WrapperTask):
 def main():
     # logger = logging.getLogger('luigi-interface')
     # logger.setLevel(logging.WARNING)
-    os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
-    # folders = {'20161013': '/Volumes/ExtWork/Suda Electrochromism/20161013/',
-    #            '20161019': '/Volumes/ExtWork/Suda Electrochromism/20161019/'}
-    if os.path.exists('data/kinetics_split/20161013 alldata.p'):
-        os.remove('data/kinetics_split/20161013 alldata.p')
-    out_folder = 'dist/kinetics_revision'
-    if os.path.exists(out_folder):
-        shutil.rmtree(out_folder)
-    # luigi.run(['MeasureAndPlotAll'])
-    luigi.run(['CorrectedLValues', '--name', '20161013', '--folder',
-               '/Volumes/ExtWork/Suda Electrochromism/20161013/'])
+    folders = {
+        '20160512-13': '/Volumes/ExtWork/Suda Electrochromism/20160512-13/'
+        # , '20161013': '/Volumes/ExtWork/Suda Electrochromism/20161013/'
+        # , '20161019': '/Volumes/ExtWork/Suda Electrochromism/20161019/'
+    }
+    # Needed for determining ROIs.
+    # for n, f in folders.iteritems():
+    #     luigi.run(['MakeAllSlices','--name', n, '--folder', f])
+
+    for n, f in folders.iteritems():
+        luigi.run(
+            ['SplitAllTraces', '--name', n, '--folder', f, '--workers', '4', '--no-lock'])
+
+        # if os.path.exists('data/kinetics_split/20161013 alldata.p'):
+        #     os.remove('data/kinetics_split/20161013 alldata.p')
+        # out_folder = 'dist/kinetics_revision'
+        # if os.path.exists(out_folder):
+        #     shutil.rmtree(out_folder)
+        # luigi.run(['MeasureAndPlotAll'])
+        # luigi.run(['CorrectedLValuesOfAllMovies', '--name', '20160512-13', '--folder',
+        #            '/Volumes/ExtWork/Suda Electrochromism/20160512-13/'])
 
 
 if __name__ == "__main__":
-    unittest.main()
+    chdir_root()
+    main()

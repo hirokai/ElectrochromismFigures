@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kinetics data</title>
+    <style type="text/css">
+        svg {
+            background: #e4ffe0;
+        }
+
+        li {
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+    </style>
+</head>
+<body>
+<div id="app">
+    <ul>
+        <li v-for="(d,di) in dates">
+            <span :style="{color: colors[di]}">{{d}}</span>
+        </li>
+    </ul>
+    <p>
+        <input type="radio" name="select-series" value="pedot-voltage" id="series-pedot-voltage" checked> <label for="series-pedot-voltage">PEDOT-voltage</label>
+        <input type="radio" name="select-series" value="pedot-date" id="series-pedot-date"> <label for="series-pedot-date">PEDOT-date</label>
+    </p>
+    <pedot_voltage_graphs v-if="plot_mode == 'pedot-voltage'" :pedots="pedots" :voltages="voltages"></pedot_voltage_graphs>
+</div>
+
+<script type="text/x-template" id="pedot_voltage_graphs-template">
+    <div>
+        <p>{{plot_mode}}</p>
+        <div v-for="(v,i) in voltages">
+        <div v-for="(p,j) in pedots">
+            <graph :xi='i' :yi='j' :voltage='v' :pedot='p'></graph>
+        </div>
+    </div>
+</script>
+
+<script type="text/x-template" id="graph-template">
+    <svg v-bind:style="styleObject">
+        <text x="5" y="15">{{name}}</text>
+        <g v-for="i in _.range(num_series)">
+            <path v-bind:d="paths[i]" :stroke="colors[i]" stroke-width="1" fill="none"></path>
+        </g>
+    </svg>
+</script>
+
+<script src="https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js"></script>
+<script src="https://cdn.jsdelivr.net/jquery/3.1.1/jquery.min.js"></script>
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="plot.js"></script>
+</body>
+</html>

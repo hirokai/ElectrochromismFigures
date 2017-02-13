@@ -1,0 +1,17 @@
+file,mode,samples
+MVI_0785.MOV,const,1
+MVI_0787.MOV,ox,1
+MVI_0788.MOV,red,1
+MVI_0789.MOV,const,2
+MVI_0790.MOV,ox,2
+MVI_0792.MOV,red,2
+MVI_0793.MOV,const,2
+40wtperc PU const.MOV,const,3
+40wtperc PU oxd.MOV,ox,3
+40wtperc PU red.MOV,red,3
+60wtperc PU const.MOV,const,4
+60wtperc PU oxd.MOV,ox,4
+60wtperc PU red.MOV,red,4
+80wtperc PU const.MOV,const,5
+80wtperc PU oxd.MOV,ox,5
+80wtperc PU red.MOV,red,5

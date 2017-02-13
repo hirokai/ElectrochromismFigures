@@ -4,10 +4,11 @@
 #
 
 import cPickle as pickle
-from common.data_tools import colors10, split_trace, load_csv, save_csv
+from common.data_tools import split_trace, load_csv
 import os
-from common.util import ensure_exists, ensure_folder_exists, basename_noext, bcolors
+from common.util import ensure_folder_exists, basename_noext, scanl, transpose
 import csv
+import operator
 
 
 class SplitTraces:
@@ -31,7 +32,7 @@ class SplitTraces:
         assert (pedot in [20, 30, 40, 60, 80])
         assert (rpm in [500, 1000, 2000, 3000, 4000, 5000])
         assert (mode in ['const', 'ox', 'red'])
-        assert len(ts) == len(vs)
+        assert len(ts) == len(vs), "lengths %d and %d" % (len(ts), len(vs))
         if mode == 'ox':
             assert voltage in [0, 0.2, 0.4, 0.6, 0.8]
         self.dat[self.mk_key(pedot, rpm, mode, voltage)] = (ts, vs)
@@ -61,6 +62,28 @@ def read_all_split_traces(path):
     with open(path) as f:
         obj = pickle.load(f)
     return obj
+
+
+def split_for_mode_with_config(res, dataset_name, movie_name, ts, vs, mode, pedot, rpm):
+    assert isinstance(res, SplitTraces)
+    assert pedot in [20, 30, 40, 60, 80]
+    assert rpm in [500, 1000, 2000, 3000, 4000, 5000]
+    assert mode in ['const', 'ox', 'red']
+
+    in_path = os.path.join('parameters', dataset_name, 'voltage programs', basename_noext(movie_name) + '.csv')
+    if not os.path.exists(in_path):
+        in_path = os.path.join('parameters', dataset_name, 'voltage programs', 'default %s.csv' % mode)
+
+    prog = transpose(load_csv(in_path, skip_rows=1))
+    voltages = map(float, prog[0])
+    durations = map(float, prog[1])
+    modes = prog[2]
+    timepoints = scanl(operator.add, 0, durations)
+    print('split_for_mode_with_config(), timepoints:', list(timepoints))
+    tss, vss = split_trace(ts, vs, timepoints)
+    for ts, ys, voltage, m in zip(tss, vss, voltages, modes):
+        if m == mode:
+            res.set_data(pedot, rpm, mode, voltage, ts, vs)
 
 
 def split_for_mode(res, ts, vs, mode, pedot, rpm):
@@ -93,7 +116,7 @@ def split_for_mode(res, ts, vs, mode, pedot, rpm):
         res.set_data(pedot, rpm, mode, voltage, ts, vs)
 
 
-def split_all_traces(in_csvs, movie_conditions_csv, sample_conditions_csv):
+def split_all_traces(dataset_name, in_csvs, movie_conditions_csv, sample_conditions_csv):
     movie_conditions = read_movie_conditions(movie_conditions_csv)
     sample_conditions = read_sample_conditions(sample_conditions_csv)
     assert len(in_csvs) == len(movie_conditions)
@@ -112,12 +135,12 @@ def split_all_traces(in_csvs, movie_conditions_csv, sample_conditions_csv):
             rpm = cond['rpm']
             # Triple of (mode, pedot, rpm) uniquely identifies the sample in the set of movies.
             t = range(len(vs))
-            split_for_mode(res, t, vs, mode, pedot, rpm)
+            split_for_mode_with_config(res, dataset_name, movie_cond['name'], t, vs, mode, pedot, rpm)
         movie_num += 1
     return res
 
 
-def save_split_data(dat, dataset_name, p_path, folder):
+def save_split_data(dat, dataset_name, p_path, folder='split'):
     assert isinstance(dat, SplitTraces)
 
     # Save as separate csv files.
@@ -167,6 +190,7 @@ def process(name, raw=False):
     sample_conditions_csv = os.path.join('parameters', name, 'sample_conditions.csv')
     in_csvs = filelist[name]
     split_dat = split_all_traces(
+        name,
         [os.path.join('data', 'kinetics', 'raw' if raw else 'corrected', name, n) for n in in_csvs],
         movie_conditions_csv,
         sample_conditions_csv)

@@ -1,4 +1,27 @@
 import os
+import itertools
+
+
+def flatten(vs):
+    return reduce(lambda a, b: a + b, vs)
+
+
+# http://stackoverflow.com/questions/14423794/equivalent-of-haskell-scanl-in-python
+def scanl(f, base, l):
+    for x in l:
+        base = f(base, x)
+        yield base
+
+
+def transpose(l):
+    return map(list, zip(*l))
+
+
+# http://stackoverflow.com/questions/4998427/how-to-group-elements-in-python-by-n-elements
+def grouper(n, iterable, fillvalue=None):
+    """grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx"""
+    args = [iter(iterable)] * n
+    return itertools.izip_longest(fillvalue=fillvalue, *args)
 
 
 # Extract elements by indices.
