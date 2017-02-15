@@ -44,15 +44,15 @@ class KineticsDataType:
 
 
 # Todo: Stub
-def read_kinetics(typ):
+def read_kinetics(typ,dates):
     if typ == KineticsDataType.SplitTraces:
-        dat = read_split_traces('split')
+        dat = read_split_traces('split', dates)
     elif typ == KineticsDataType.RawSplitTraces:
-        dat = read_split_traces('raw_split')
+        dat = read_split_traces('raw_split', dates)
     elif typ == KineticsDataType.RateConstant:
-        dat = read_rate_constant()
+        dat = read_rate_constant(dates)
     elif typ == KineticsDataType.FinalL:
-        dat = read_final_l()
+        dat = read_final_l(dates)
     else:
         raise ValueError("Unsupported operation")
 
@@ -60,12 +60,15 @@ def read_kinetics(typ):
     return dat
 
 
-def read_split_traces(typ):
+def read_split_traces(typ, dates=None):
     dat = Kinetics()
+
+    if dates is None:
+        dates = ['20160512-13', '20161013', '20161019']
 
     def read_mode(mode, voltages):
         for voltage in voltages:
-            for date in ['20161013', '20161019']:
+            for date in dates:
                 path = os.path.join('data', 'kinetics', typ, date,
                                     '%d perc PEDOT - %d rpm' % (pedot, rpm), '%s %.1f.csv' % (mode, voltage))
                 if os.path.exists(path):
@@ -83,12 +86,15 @@ def read_split_traces(typ):
     return dat
 
 
-def read_final_l():
+def read_final_l(dates=None):
     dat = Kinetics()
+
+    if dates is None:
+        dates = ['20160512-13', '20161013', '20161019']
 
     def read_mode(mode, voltages):
         for voltage in voltages:
-            for date in ['20161013', '20161019']:
+            for date in dates:
                 path = os.path.join('data', 'kinetics', 'fitted_manual', date,
                                     '%d perc PEDOT - %d rpm' % (pedot, rpm), '%s %.1f.csv' % (mode, voltage))
                 if os.path.exists(path):
@@ -104,12 +110,16 @@ def read_final_l():
     return dat
 
 
-def read_rate_constant():
+def read_rate_constant(dates=None):
     dat = Kinetics()
+
+    if dates is None:
+        dates = ['20160512-13', '20161013', '20161019']
+
     for rpm in [500, 1000, 2000, 3000, 4000, 5000]:
         for pedot in [20, 30, 40, 60, 80]:
             for voltage in [0.2, 0.4, 0.6, 0.8]:
-                for date in ['20161013', '20161019']:
+                for date in dates:
                     path = os.path.join('data', 'kinetics', 'fitted_manual', date,
                                         '%d perc PEDOT - %d rpm' % (pedot, rpm), 'ox %.1f.csv' % voltage)
                     if os.path.exists(path):

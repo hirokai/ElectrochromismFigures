@@ -22,6 +22,8 @@ def ambiguous_path(path_head):
 def save_csv(path, rows):
     import csv
 
+    assert isinstance(path,str)
+
     folder = os.path.dirname(path)
     ensure_exists(folder)
 
@@ -54,7 +56,7 @@ def load_csv(path, skip_rows=0, numpy=False):
 def mk_dict(rows):
     d = {}
     for row in rows:
-        d[row[0]] = rows[1:]
+        d[row[0]] = row[1:]
     return d
 
 
@@ -88,6 +90,11 @@ def split_trace(ts_o, ys_o, split_t):
         ts_s.append(ts[tis[i]:tis[i + 1]])
         ys_s.append(ys[tis[i]:tis[i + 1]])
     return filter(lambda a: a.size != 0, ts_s), filter(lambda a: a.size != 0, ys_s)
+
+
+def get_movie_list(name):
+    dat = np.array(load_csv(os.path.join('parameters', name, 'movie_conditions.csv')))
+    return list(dat[1:, 0])
 
 
 #

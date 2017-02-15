@@ -1,0 +1,19 @@
+digraph {
+    node [shape = rect];
+    sample_roi [shape = oval];
+    calibration_roi [shape = oval];
+    manual_fitting [shape=oval];
+    voltage_program [shape=oval];
+    movie -> slices;
+    slices -> raw;
+    raw -> raw_split;
+    slices -> colorchart;
+    calibration_roi -> colorchart;
+    sample_roi -> raw;
+    raw -> corrected;
+    colorchart -> corrected;
+    voltage_program -> split;
+    corrected -> split;
+    manual_fitting -> fitted_manual;    
+    split -> fitted_manual;
+}

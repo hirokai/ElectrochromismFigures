@@ -1,189 +1,108 @@
-import luigi
+#
+# Plotting final L values.
+#
+
+import os
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-import seaborn as sns
-from matplotlib.ticker import MultipleLocator
-from scipy.optimize import curve_fit
 
-from common.data_tools import colors10, load_csv
-from common.data_tools import split_trace
-from common.luigi_tools import cleanup
-from common.pedot_voltage_conditions import CollectCIELabStub
-from common.figure_tools import plot_and_save, set_format, set_common_format
-
-sns.set_style('white')
-sns.set_style("ticks")
+from kinetics import Kinetics, KineticsDataType, read_kinetics
+from common.data_tools import colors10
+from common.util import chdir_root, ensure_folder_exists
 
 
-def first_order(t, a_i, a_f, k, t0):
-    y = a_i + (a_f - a_i) * (1 - np.exp(-k * (t - t0)))
-    return y
+def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], label=None, show=False):
+    assert isinstance(dat, Kinetics)
+    if variable == 'pedot':
+        ps = [20, 30, 40, 60, 80]
+        d = {p: dat.get_data(p, rpm, mode, voltage) for p in ps}
+    elif variable == 'rpm':
+        # rs = [500, 1000, 2000, 3000, 4000, 5000]
+        rs = [500, 1000, 5000]
+        d1 = {r: dat.get_data(pedot, r, mode, voltage) for r in rs}
+        th = {500: 5.4, 1000: 4.2, 2000: 3.0, 3000: 2.8, 4000: 2.9, 5000: 2.8}  # 30perc PEDOT
+        # th = {500: 7.0, 1000: 4.2, 2000: 3.7, 3000: 4.0, 4000: 3.1, 5000: 2.9}  # 20perc PEDOT
+        d = {}
+        print(d1)
+        for k, v in d1.iteritems():
+            d[th[k]] = v
+    elif variable == 'mode':
+        ms = ['const', 'ox', 'red']
+        d = {m: dat.get_data(pedot, rpm, m, voltage) for m in ms}
+    elif variable == 'voltage':
+        vs = [-0.5, -0.2, 0, 0.2, 0.4, 0.6, 0.8]
+        if mode:
+            d = {v: dat.get_data(pedot, rpm, mode, v) for v in vs}
+        else:
+            d = {v: dat.get_data(pedot, rpm, 'ox', v) or dat.get_data(pedot, rpm, 'red', v) for v in vs}
+    ks = sorted(d.keys())
+    vs = [np.mean(d[k] or []) for k in ks]
+    l = [(zip([k] * 100, d[k]) or []) for k in ks if d[k] is not None]
+    if l:
+        kv_all = reduce(lambda a, b: a + b, l)
+        k_all = [a[0] for a in kv_all]
+        v_all = [a[1] for a in kv_all]
+        print(kv_all)
+        es = [np.std(d[k] or []) for k in ks]
+        plt.errorbar(ks, vs, es, c=color, label=label)
+        # plt.scatter(k_all, v_all, c=color)
+        plt.title('%d perc PEDOT, %d rpm, %s, %.1f V' % (pedot or -1, rpm or -1, mode or '--', voltage or -1))
+        plt.xlabel(variable)
+        plt.ylabel('Rate constant [sec^-1]')
+        if show:
+            plt.show()
 
 
-def plot_20perc(path):
-    def func():
-        fig, ax = plt.subplots(figsize=(4.5, 3))
+def main():
+    chdir_root()
 
-        vs = np.array(map(lambda a: [float(a[0]), float(a[2])], load_csv(path)))
-        tss, lss = split_trace(np.array(vs[:, 0]), np.array(vs[:, 1]), range(6, 1000, 60))
-        count = 0
-        # print(tss)
-        used_sections_idxs = [5, 7, 9, 11]
-        for i, vs in enumerate(zip(tss, lss)):
-            ts, ls = vs
-            if i in used_sections_idxs and len(ts) > 0:
-                ts = ts - min(ts)
-                plt.scatter(ts, ls, c=colors10[count % 10], lw=0, s=12)
-                fit_start = 2
-                popt, _ = curve_fit(first_order, ts[fit_start:60], ls[fit_start:60])
-                ts_fit = np.linspace(fit_start, 60, 100)
-                ts_fit_plot = np.linspace(1, 60, 100)
-                ls_fit_plot = first_order(ts_fit_plot, *popt)
-                plt.plot(ts_fit_plot, ls_fit_plot, c=colors10[count % 10], lw=1)
-                count += 1
-        plt.axis([0, 60, 45, 65])
-        set_format(ax, [0, 30, 60], [45, 55, 65], 6, 5)
+    # dates = None
+    dates = ['20160512-13', '20161019']
 
-    return func
+    dat = read_kinetics(KineticsDataType.RateConstant, dates=None)
+    plt.figure(figsize=(6, 4))
+    # plt.figure(figsize=(10, 10))
+    for i, pedot in enumerate([30]):
+        # for i, pedot in enumerate([20, 30, 40, 60, 80]):
+        plot_series(dat,
+                    'rpm', pedot, None, 'ox', 0.8, color=colors10[i], label='%d perc PEDOT' % pedot)
+    # plt.title('Varied PEDOT and rpm, ox, 0.8 V')
+    plt.legend(loc='upper right')
+    plt.ylim([0, 1.2])
+    plt.xlim([0, 8])
+    plt.xlabel('Thickness [um]')
+    outpath = os.path.join('kinetics', 'dist', '20170214 rate vs thickness.pdf')
+    ensure_folder_exists(outpath)
+    plt.savefig(outpath)
+    plt.show()
 
+    dat = read_kinetics(KineticsDataType.RateConstant, dates=None)
+    plt.figure(figsize=(6, 4))
+    for i, voltage in enumerate([0.2, 0.4, 0.6, 0.8]):
+        plot_series(dat, 'pedot', None, 2000, 'ox', voltage, color=colors10[i], label='%.1f V' % voltage)
+    plt.title('Varied PEDOT and voltage, ox, 2000 rpm')
+    plt.xlim([0, 100])
+    plt.ylim([0, 1.2])
+    plt.legend()
+    outpath = os.path.join('kinetics', 'dist', '20170214 rate pedot voltage.pdf')
+    ensure_folder_exists(outpath)
+    plt.savefig(outpath)
+    plt.show()
 
-def plot_rate_constants_voltage(path):
-    plt.figure(figsize=(4.5, 3))
-    df = pd.read_csv(path)
+    dat = read_kinetics(KineticsDataType.FinalL, dates=dates)
+    print(dat)
+    plt.figure(figsize=(6, 4))
+    for i, pedot in enumerate([20, 40, 60, 80]):
+        plot_series(dat, 'voltage', pedot, 2000, None, None, color=colors10[i], label='%d perc PEDOT' % pedot)
+    plt.title('Varied PEDOT and voltage, ox, 2000 rpm')
+    plt.ylabel('Final L value')
 
-    def get(df, v):
-        df2 = df[df['PEDOT ratio'] == v][df['skip'] != 1]
-        # df2 = pd.concat([df2[df2['voltage'] > 0][df2['mode'] == 'ox'], df2[df2['voltage'] <= 0][df2['mode'] == 'red']])
-        df2 = df2[df2['voltage'] > 0][df2['mode'] == 'ox']
-        return df2
-
-    ratios = [20, 40, 60, 80]
-    # ratios = [20]
-    pedots = [get(df, v) for v in ratios]
-
-    def get_exp_with_x0(x0):
-        def exp_func(x, A, k):
-            return A * np.exp(k * (x - x0))
-
-        return exp_func
-
-    with open('../data/plot_rate_constants_voltage.txt', 'r') as content_file:
-        s = content_file.read()
-
-    vs = map(float, s.split('\n'))
-
-    count = 0
-    for i, pedot in enumerate(pedots):
-        # if i == 2:
-        #     continue
-        plt.scatter(pedot['voltage'], pedot['k'], c=colors10[i], s=25, lw=0)
-        exp = get_exp_with_x0(vs[i])
-        popt, pcov = curve_fit(exp, pedot['voltage'], pedot['k'], [0.2, 1])
-        x = np.linspace(vs[i], 0.8, 100)
-        y = exp(x, popt[0], popt[1])
-        plt.plot(x, y, c=colors10[i], lw=1)
-        count += 1
-
-    plt.axis([0, 1, 0, 0.5])
-
-
-def plot_rate_constants_pedot(path):
-    def func():
-        plt.figure(figsize=(4.5, 3))
-        df = pd.read_csv(path)
-
-        def get(df, v):
-            df2 = df[df['voltage'] == v][df['skip'] != 1]
-            df2 = df2[df2['voltage'] > 0][df2['mode'] == 'ox']
-            return df2.sort('PEDOT ratio')
-
-        voltages = [0.2, 0.4, 0.6, 0.8]
-        pedots = [get(df, v) for v in voltages]
-
-        count = 0
-        for i, pedot in enumerate(pedots):
-            # if i == 2:
-            #     continue
-            plt.plot(pedot['PEDOT ratio'], pedot['k'], c=colors10[i], marker='o', mew=0, markersize=5, lw=1)
-            count += 1
-
-        plt.axis([0, 100, 0, 1])
-
-    return func
-
-
-def plot_rate_constants_voltage_red(path):
-    def func():
-        fig, ax = plt.subplots(figsize=(4.5, 3))
-        df = pd.read_csv(path)
-
-        def get(df, v):
-            df2 = df[df['PEDOT ratio'] == v][df['skip'] != 1]
-            df2 = df2[df2['voltage'] <= 0][df2['mode'] == 'red']
-            return df2
-
-        ratios = [20, 40, 60, 80]
-        pedots = [get(df, v) for v in ratios]
-
-        for i, pedot in enumerate(pedots):
-            plt.plot(pedot['voltage'], pedot['k'], c=colors10[i], marker='o', mew=0, markersize=5, lw=1)
-
-        plt.axis([-0.6, 0.2, 0, 0.2])
-        ax.yaxis.set_major_locator(MultipleLocator(0.1))
-        ax.yaxis.set_minor_locator(MultipleLocator(0.02))
-
-    return func
-
-
-class CollectAllKineticsStub(luigi.Task):
-    def output(self):
-        return luigi.LocalTarget(
-            '../../Suda Electrochromism data/20160512-13 Suda EC slices/analysis_0525/curvefit/result.csv')
-
-
-class PlotOxTrace(luigi.Task):
-    name = luigi.Parameter()
-
-    def requires(self):
-        return CollectCIELabStub()
-
-    def output(self):
-        return [luigi.LocalTarget('../dist/Fig ' + self.name + '.pdf')]
-
-    def run(self):
-        set_common_format()
-        plot_and_save(plot_20perc(self.input()['15'].path), self.name)
-
-
-class PlotRateConstants(luigi.Task):
-    name1 = luigi.Parameter()
-    name2 = luigi.Parameter()
-
-    def requires(self):
-        return CollectAllKineticsStub()
-
-    def output(self):
-        return [luigi.LocalTarget('../dist/Fig ' + self.name1 + '.pdf'),
-                luigi.LocalTarget('../dist/Fig ' + self.name2 + '.pdf')]
-
-    def run(self):
-        path = self.input().path
-        set_common_format()
-        plot_and_save(plot_rate_constants_pedot(path), self.name1)
-        plot_and_save(plot_rate_constants_voltage_red(path), self.name2)
-
-
-class TestPlottingKinetics(luigi.WrapperTask):
-    def requires(self):
-        yield PlotOxTrace(name='4a')
-        yield PlotRateConstants(name1='4c', name2='S5')
+    plt.legend(loc='lower right')
+    outpath = os.path.join('kinetics', 'dist', '20170214 final l values.pdf')
+    ensure_folder_exists(outpath)
+    plt.savefig(outpath)
+    plt.show()
 
 
 if __name__ == "__main__":
-    import os
-
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
-    cleanup(PlotOxTrace(name='4a'))
-    cleanup(PlotRateConstants(name1='4c', name2='S5'))
-    luigi.run(['TestPlottingKinetics'])
+    main()

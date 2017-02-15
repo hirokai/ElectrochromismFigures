@@ -28,12 +28,12 @@ Vue.component('graph', {
     template: '#graph-template',
     computed: {
         paths: function () {
-            const e = d3.extent(this.points[0], function (d) {
-                return d[0];
-            });
-            const x = d3.scaleLinear().range([0, width]).domain([e[0], e[0] + 60]);
             const y = d3.scaleLinear().range([height, 0]).domain([0, 70]);
             return _.map(this.points, function (ps) {
+                const e = d3.extent(ps, function (p) {
+                    return p[0];
+                });
+                const x = d3.scaleLinear().range([0, width]).domain([e[0], e[0] + 60]);
                 return mk_path(ps, x, y);
             });
         },
@@ -57,11 +57,20 @@ Vue.component('graph', {
         //     .call(axis);
         const self = this;
         _.map(['20160512-13', '20161013', '20161019'], function (d, i) {
-            $.get('./kinetics/split/' + d + '/' + self.pedot + ' perc PEDOT - 2000 rpm/' + self.mode + ' ' + self.voltage + '.csv', function (s) {
+            const url = './kinetics/' + (self.corrected ? 'split' : 'raw_split') +
+                '/' + d + '/' + self.pedot + ' perc PEDOT - 2000 rpm/' + self.mode + ' ' + self.voltage + '.csv';
+            if (self.voltage == 0.4 && self.pedot == '80') {
+                console.log(url);
+            }
+            $.get(url, function (s) {
                 const vs = _.map(d3.csvParseRows(s), function (row) {
                     return [parseFloat(row[0]), parseFloat(row[1])];
                 });
                 self.$set(self.points, i, vs);
+            }).fail(function () {
+                console.log('Not found: ' + url);
+                app.missing.push(url);
+                self.$set(self.points, i, [[0, 0], [0, 0]]);
             });
         });
         // _.map(['20160512-13', '20161013', '20161019'], function (d, i) {
@@ -73,14 +82,14 @@ Vue.component('graph', {
         //     });
         // });
     },
-    props: ['voltage', 'pedot', 'xi', 'yi'],
+    props: ['voltage', 'pedot', 'xi', 'yi', 'corrected'],
     created: function () {
     }
 });
 
 Vue.component('pedot_voltage_graphs', {
     template: "#pedot_voltage_graphs-template",
-    props: ['plot_mode','voltages','pedots','dates']
+    props: ['plot_mode', 'voltages', 'pedots', 'dates', 'corrected']
 });
 
 const app = new Vue({
@@ -95,12 +104,20 @@ const app = new Vue({
             colors: _.map(_.range(10), function (i) {
                 return colors(i);
             }),
-            plot_mode: 'pedot-voltage'
+            plot_mode: 'pedot-voltage',
+            corrected_mode: true,
+            missing: []
         }
-    }
+    },
+    computed: {}
 });
 
 $('input[name="select-series"]').on('click', function () {
     const mode = $('input[name="select-series"]:checked').val();
     app.plot_mode = mode;
+});
+
+$('input#check-corrected').on('click', function (ev) {
+    const mode = this.checked;
+    app.corrected_mode = mode;
 });

@@ -78,10 +78,10 @@ def split_for_mode_with_config(res, dataset_name, movie_name, ts, vs, mode, pedo
     voltages = map(float, prog[0])
     durations = map(float, prog[1])
     modes = prog[2]
-    timepoints = scanl(operator.add, 0, durations)
+    timepoints = list(scanl(operator.add, 0, durations))
     print('split_for_mode_with_config(), timepoints:', list(timepoints))
     tss, vss = split_trace(ts, vs, timepoints)
-    for ts, ys, voltage, m in zip(tss, vss, voltages, modes):
+    for ts, vs, voltage, m in zip(tss, vss, voltages, modes):
         if m == mode:
             res.set_data(pedot, rpm, mode, voltage, ts, vs)
 

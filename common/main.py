@@ -6,8 +6,8 @@ from cyclic_voltammetry.plot_cv import PlotCV
 from film_thickness.plot_thickness import PlotThickness
 from final_colors.plot_final_colors import PlotFinalColors
 
-from plot_100cycles import Plot100Cycles
-from plot_kinetics import PlotOxTrace, PlotRateConstants
+from plot_100cycles_old import Plot100Cycles
+from plot_kinetics_old import PlotOxTrace, PlotRateConstants
 from plot_kinetics_space import PlotCIESpace
 from plot_uvvis_lab_timecourse import PlotUVVisTimeCIELab
 

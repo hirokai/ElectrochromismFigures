@@ -11,11 +11,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 
-from common.data_tools import colors10, load_csv, save_csv
+from common.data_tools import colors10, load_csv, save_csv, get_movie_list
 from common.util import ensure_exists, ensure_folder_exists, basename_noext, bcolors, chdir_root, grouper, flatten
-
 from common.make_slices import mk_slices
 from common.image_tools import get_cie_l_rois
+from common.luigi_tools import cleanup
+
 from kinetics.split import SplitTraces, split_all_traces, save_split_data
 from measure_colorchart import MeasureLValuesOfColorCharts
 from split import read_sample_conditions, read_all_split_traces
@@ -76,7 +77,7 @@ def read_rois_simple(path):
 # Make slices for all movies in `folder`.
 # For testing.
 # This can also be used for making slices to determine ROIs.
-# Actual measurement invokes MakeSingleMovieSlices instead.
+# The actual batch processing invokes MakeSingleMovieSlices instead.
 class MakeAllSlices(luigi.WrapperTask):
     name = luigi.Parameter()
     folder = luigi.Parameter()
@@ -159,20 +160,18 @@ class RawLValuesOfSingleMovie(luigi.Task):
         assert self.mode == '100cycles' or self.mode == 'kinetics'
         print('%s' % self.path)
         folder_path = os.path.join(os.path.dirname(self.path), 'slices', basename_noext(self.path))
-        print(self.roi)
-        if self.roi == '':
-            print "No ROI"
-        else:
-            max_timepoints = 10000 if self.mode == '100cycles' else 2000
-            rois_flatten = [int(s) for s in str(self.roi).split(',')]
-            assert len(rois_flatten) % 4 == 0, 'ROI must have 4 int values'
-            rois = list(grouper(4, rois_flatten))
-            lss = measure_movie_slices(folder_path, rois, max_timepoints=max_timepoints)
-            ensure_folder_exists(self.output().path)
-            np.savetxt(self.output().path, lss.transpose(), delimiter=",")
-            # with open(self.output().path) as f:
-            #     writer = csv.writer(f)
-            #     writer.writerow([for ls in lss])
+        assert isinstance(self.roi, str) and str(self.roi).count(',') >= 3, 'roi must be string'
+
+        max_timepoints = 10000 if self.mode == '100cycles' else 2000
+        rois_flatten = [int(s) for s in str(self.roi).split(',')]
+        assert len(rois_flatten) % 4 == 0, 'ROI must have 4 int values'
+        rois = list(grouper(4, rois_flatten))
+        lss = measure_movie_slices(folder_path, rois, max_timepoints=max_timepoints)
+        ensure_folder_exists(self.output().path)
+        np.savetxt(self.output().path, lss.transpose(), delimiter=",")
+        # with open(self.output().path) as f:
+        #     writer = csv.writer(f)
+        #     writer.writerow([for ls in lss])
 
     def output(self):
         return luigi.LocalTarget(os.path.join('data', self.mode, 'raw',
@@ -251,11 +250,6 @@ class CalcCorrectionValues(luigi.Task):
         calc_calibration_factor(self.name, self.folder)
 
 
-def get_movie_list(name):
-    dat = np.array(load_csv(os.path.join('parameters', name, 'movie_conditions.csv')))
-    return list(dat[1:, 0])
-
-
 class CorrectedLValuesOfAllMovies(luigi.Task):
     name = luigi.Parameter()
     folder = luigi.Parameter()
@@ -267,7 +261,6 @@ class CorrectedLValuesOfAllMovies(luigi.Task):
 
     def output(self):
         names = get_movie_list(self.name)
-        print(names)
         return [luigi.LocalTarget(
             os.path.join('data', 'kinetics', 'corrected', self.name, basename_noext(n) + '.csv')) for n
                 in names]
@@ -575,6 +568,7 @@ def main():
     #     luigi.run(['MakeAllSlices','--name', n, '--folder', f])
 
     for n, f in folders.iteritems():
+        cleanup(SplitAllTraces(name=n, folder=f))
         luigi.run(
             ['SplitAllTraces', '--name', n, '--folder', f, '--workers', '4', '--no-lock'])
 

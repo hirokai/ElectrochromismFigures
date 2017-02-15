@@ -12,6 +12,7 @@ from skimage import color
 from skimage import io
 
 from common.util import basename_noext, ensure_folder_exists, chdir_root
+from common.data_tools import get_movie_list
 
 
 class RectROI:
@@ -199,6 +200,9 @@ def measure_color_chart(path, rois, cell_width=4.0, debug_drawcells=False):
 def process_movies(root_folder, movie_conditions_path, roi_path, out_folder, slice_nums=[1],
                    debug_show_samples=False,
                    debug_show_l_plots=False):
+    assert os.path.isdir(out_folder)
+    assert os.path.splitext(movie_conditions_path)[1] == '.csv'
+
     with open(movie_conditions_path) as f:
         reader = csv.reader(f)
         reader.next()
@@ -294,17 +298,17 @@ class MeasureLValuesOfColorCharts(luigi.Task):
 
     def run(self):
         movie_condition_path = os.path.join('parameters', self.name, 'movie_conditions.csv')
-        out_path = os.path.join(self.output().path)
-        print('Output: ' + out_path)
+        out_folder = os.path.join('data', 'kinetics', 'colorchart', str(self.name))
         roipath = os.path.join('parameters', self.name, 'calibration rois.csv')
-        process_movies(self.folder, movie_condition_path, roipath, out_path,
+        process_movies(self.folder, movie_condition_path, roipath, out_folder,
                        slice_nums=[],  # All frames
                        debug_show_samples=False)
 
     def output(self):
-        folder = os.path.join('data', 'kinetics', 'colorchart', str(self.name))
-        return [luigi.LocalTarget(os.path.join(folder, f)) for f in os.listdir(folder) if
-                os.path.splitext(f)[1] == '.csv']
+        names = get_movie_list(self.name)
+        return [luigi.LocalTarget(
+            os.path.join('data', 'kinetics', 'colorchart', str(self.name), basename_noext(n) + '_1.csv')) for n
+                in names]
 
 
 def main():

@@ -4,9 +4,13 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets import Slider, Button, RadioButtons
-from util import ensure_folder_exists
+from common.util import ensure_folder_exists, chdir_root
 
 from common.data_tools import load_csv, save_csv
+
+
+def get_out_path(path):
+    return path.replace('/split/', '/fitted_manual/')
 
 
 # Specify conditions chosen for analysis
@@ -15,17 +19,14 @@ def recursive_walk(folder):
     for root, dirnames, filenames in os.walk(folder):
         for filename in fnmatch.filter(filenames, '*.csv'):
             matches.append(os.path.join(root, filename))
-    return [m for m in matches if m.find('red') != -1
+    return [m for m in matches if
+            # m.find('red') != -1
             # and
-            and m.find('2000 rpm') != -1
+            m.find('2000 rpm') != -1
             # # m.find('0.8') != -1 and
             # # not m.find('const -0.5') != -1 and
-            # not os.path.exists(get_out_path(m))
+            and not os.path.exists(get_out_path(m))
             ]
-
-
-def get_out_path(in_path):
-    return in_path.replace('/split/', '/fitted_manual/')
 
 
 skinv = None
@@ -39,10 +40,12 @@ paths = []
 count = 0
 
 
-def main():
-    global skinv, st0, sli, slf,l_scatter,fig,ax,l,paths,count
+def main(name):
+    global skinv, st0, sli, slf, l_scatter, fig, ax, l, paths, count
+
+    plt.interactive(False)
     count = 0
-    paths = recursive_walk('../data/kinetics/split/20161013')
+    paths = recursive_walk('./data/kinetics/split/%s' % name)
     if not paths:
         print('No files. Quitting.')
         return
@@ -122,7 +125,7 @@ def update(val):
 
 
 def set_trace(path):
-    global l_scatter
+    global l_scatter, fig
     vs = load_csv(path, numpy=True)
     ts_dat = vs[:, 0]
     ys_dat = vs[:, 1]
@@ -164,6 +167,7 @@ def save(event):
 def skip(event):
     next_trace()
 
-plt.interactive(False)
 
-main()
+if __name__ == "__main__":
+    chdir_root()
+    main('20160512-13')

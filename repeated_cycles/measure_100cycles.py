@@ -1,47 +1,60 @@
 import os
+import csv
 import luigi
-from src.measure_kinetics_revision import all_measure_cielab
-from src.make_slices import all_make_slices
+from common.util import chdir_root, basename_noext
+from common.data_tools import load_csv, mk_dict
+from kinetics.measure_kinetics import RawLValuesOfSingleMovie
+import shutil
 
 
-# FIXME: Need to be updated to use the latest version of analysis.
+def get_roi(dat, name):
+    k = basename_noext(name)
+    if k not in dat:
+        k = k[4:8]
+    return ','.join(dat[k])
 
 
-class MakeAllSlices(luigi.Task):
-    folder = luigi.Parameter()
-
-    def run(self):
-        all_make_slices(self.folder)
-
-    def output(self):
-        return [luigi.LocalTarget(os.path.join(self.folder, 'slices'))]
-
-
-class RawLValues100Cycles(luigi.Task):
+class Measure100Cycles(luigi.Task):
     name = luigi.Parameter()
+    date = luigi.Parameter()
     folder = luigi.Parameter()
+    initial = luigi.Parameter()  # Early cycles
+    final = luigi.Parameter()  # Late cycles
 
     def requires(self):
-        return MakeAllSlices(folder=self.folder)
-
-    def output(self):
-        return luigi.LocalTarget(os.path.join('data', '100cycles', '%s all_l_values.csv' % self.name))
+        dat = mk_dict(load_csv(os.path.join('parameters', self.date, 'sample rois.csv'))[1:])
+        roi_initial = get_roi(dat, self.initial)
+        roi_final = get_roi(dat, self.final)
+        return [
+            RawLValuesOfSingleMovie(name=self.name, path=os.path.join(self.folder, self.initial), roi=roi_initial,
+                                    mode='100cycles'),
+            RawLValuesOfSingleMovie(name=self.name, path=os.path.join(self.folder, self.final), roi=roi_final,
+                                    mode='100cycles')
+        ]
 
     def run(self):
-        roi_path = 'parameters/%s/sample sample rois.csv' % self.name
-        all_measure_cielab(self.folder, roi_path, self.output().path, max_timepoints=2000)
+        shutil.copy(self.input()[0].path, self.output()[0].path)
+        shutil.copy(self.input()[1].path, self.output()[1].path)
+
+    def output(self):
+        return [
+            luigi.LocalTarget(os.path.join('data', '100cycles', 'corrected', '%s_initial.csv' % self.name)),
+            luigi.LocalTarget(os.path.join('data', '100cycles', 'corrected', '%s_final.csv' % self.name))
+        ]
 
 
 class MeasureAll100Cycles(luigi.WrapperTask):
     def requires(self):
-        yield RawLValues100Cycles(name='20161024',folder='/Volumes/ExtWork/Suda Electrochromism/20161024')
-        yield RawLValues100Cycles(name='20151111', folder='/Volumes/ExtWork/Suda Electrochromism/20161111')
+        with open(os.path.join('parameters', 'dataset', '100cycles.csv'), 'rU') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                yield Measure100Cycles(name=row['name'], date=row['date'], folder=row['folder'],
+                                       initial=row['initial'], final=row['final'])
 
 
 def main():
-    os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
-    luigi.run(
-        ['MeasureAll100Cycles'])
+    chdir_root()
+    luigi.run(['MeasureAll100Cycles'])
 
 
 if __name__ == "__main__":

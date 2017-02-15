@@ -1,0 +1,4 @@
+"Resource: /Users/hiroyuki/Documents/Nishizawa Lab/2016 \230\186\150\229\130\153\228\184\173\227\129\174\232\171\150\230\150\135/20160316 Paper Suda electrochromism/20160531-2 Figures managed by git/kinetics/verify.ml": "\240\135\229>rsy\023,\026\221\144g9\164\203"
+"Rule: ocaml: cmo* -> byte (%=verify )": "\232:T\227x\165+>\021\2528\246y\210\156\150"
+"Rule: ocaml: ml -> cmo & cmi (%=verify )": "\001y%G\208\216\132\226\023C\250\241f\132\136\251"
+"Rule: ocaml dependencies ml (%=verify )": "\n\225dxb\243r\251\155i1\204\140K\012b"

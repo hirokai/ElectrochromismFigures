@@ -1,0 +1,13 @@
+### Starting build.
+# Target: verify.ml.depends, tags: { extension:ml, file:verify.ml, ocaml, ocamldep, quiet }
+ocamldep.opt -modules verify.ml > verify.ml.depends
+# Target: verify.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:verify.cmo, file:verify.ml, implem, ocaml, quiet }
+ocamlc.opt -c -I /Users/hiroyuki/.opam/system/lib/ANSITerminal -I /Users/hiroyuki/.opam/system/lib/Batteries -I /Users/hiroyuki/.opam/system/lib/bytes -I /Users/hiroyuki/.opam/system/lib/num -I /usr/local/lib/ocaml -o verify.cmo verify.ml
++ ocamlc.opt -c -I /Users/hiroyuki/.opam/system/lib/ANSITerminal -I /Users/hiroyuki/.opam/system/lib/Batteries -I /Users/hiroyuki/.opam/system/lib/bytes -I /Users/hiroyuki/.opam/system/lib/num -I /usr/local/lib/ocaml -o verify.cmo verify.ml
+File "verify.ml", line 25, characters 8-52:
+Warning 10: this expression should have type unit.
+File "verify.ml", line 26, characters 8-33:
+Warning 10: this expression should have type unit.
+# Target: verify.byte, tags: { byte, dont_link_with, extension:byte, file:verify.byte, link, ocaml, program, quiet }
+ocamlc.opt -I /Users/hiroyuki/.opam/system/lib/ANSITerminal -I /Users/hiroyuki/.opam/system/lib/Batteries -I /Users/hiroyuki/.opam/system/lib/bytes -I /Users/hiroyuki/.opam/system/lib/num -I /usr/local/lib/ocaml unix.cma ANSITerminal.cma nums.cma bigarray.cma str.cma batteries.cma verify.cmo -o verify.byte
+# Compilation successful.

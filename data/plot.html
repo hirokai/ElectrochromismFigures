@@ -22,10 +22,16 @@
         </li>
     </ul>
     <p>
+        <input type="checkbox" id="check-corrected" checked><label for="check-corrected">Corrected</label>
         <input type="radio" name="select-series" value="pedot-voltage" id="series-pedot-voltage" checked> <label for="series-pedot-voltage">PEDOT-voltage</label>
         <input type="radio" name="select-series" value="pedot-date" id="series-pedot-date"> <label for="series-pedot-date">PEDOT-date</label>
     </p>
-    <pedot_voltage_graphs v-if="plot_mode == 'pedot-voltage'" :pedots="pedots" :voltages="voltages"></pedot_voltage_graphs>
+    <pedot_voltage_graphs v-if="plot_mode == 'pedot-voltage'" :pedots="pedots" :voltages="voltages" :corrected="corrected_mode"></pedot_voltage_graphs>
+    <!--<ul>-->
+        <!--<li v-for="s in missing">-->
+            <!--{{s}}-->
+        <!--</li>-->
+    <!--</ul>-->
 </div>
 
 <script type="text/x-template" id="pedot_voltage_graphs-template">
@@ -33,7 +39,7 @@
         <p>{{plot_mode}}</p>
         <div v-for="(v,i) in voltages">
         <div v-for="(p,j) in pedots">
-            <graph :xi='i' :yi='j' :voltage='v' :pedot='p'></graph>
+            <graph :xi='i' :yi='j' :voltage='v' :pedot='p' :corrected="corrected"></graph>
         </div>
     </div>
 </script>

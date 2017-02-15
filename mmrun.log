@@ -1,0 +1,52 @@
+2017-02-13 20:55:06,775 luigi.scheduler INFO     No prior state file exists at /var/lib/luigi-server/state.pickle. Starting with empty state
+2017-02-13 20:55:06,781 luigi.server    INFO     Scheduler starting up
+2017-02-13 20:55:54,200 luigi.server    INFO     Scheduler instance shutting down
+2017-02-13 20:55:54,201 luigi.scheduler WARNING  Failed saving scheduler state
+Traceback (most recent call last):
+  File "/Users/hiroyuki/.pyenv/versions/anaconda2-4.1.1/lib/python2.7/site-packages/luigi/scheduler.py", line 434, in dump
+    with open(self._state_path, 'wb') as fobj:
+IOError: [Errno 2] No such file or directory: '/var/lib/luigi-server/state.pickle'
+2017-02-13 20:55:54,203 luigi.server    INFO     Scheduler instance shutting down
+2017-02-13 20:55:54,203 luigi.scheduler WARNING  Failed saving scheduler state
+Traceback (most recent call last):
+  File "/Users/hiroyuki/.pyenv/versions/anaconda2-4.1.1/lib/python2.7/site-packages/luigi/scheduler.py", line 434, in dump
+    with open(self._state_path, 'wb') as fobj:
+IOError: [Errno 2] No such file or directory: '/var/lib/luigi-server/state.pickle'
+2017-02-13 20:55:56,314 luigi.scheduler INFO     No prior state file exists at /var/lib/luigi-server/state.pickle. Starting with empty state
+2017-02-13 20:55:56,321 luigi.server    INFO     Scheduler starting up
+2017-02-13 20:56:56,323 luigi.scheduler INFO     Starting pruning of task graph
+2017-02-13 20:56:56,324 luigi.scheduler INFO     Done pruning task graph
+2017-02-13 20:57:56,326 luigi.scheduler INFO     Starting pruning of task graph
+2017-02-13 20:57:56,326 luigi.scheduler INFO     Done pruning task graph
+2017-02-13 20:57:56,390 luigi.server    INFO     Scheduler instance shutting down
+2017-02-13 20:57:56,390 luigi.scheduler WARNING  Failed saving scheduler state
+Traceback (most recent call last):
+  File "/Users/hiroyuki/.pyenv/versions/anaconda2-4.1.1/lib/python2.7/site-packages/luigi/scheduler.py", line 434, in dump
+    with open(self._state_path, 'wb') as fobj:
+IOError: [Errno 2] No such file or directory: '/var/lib/luigi-server/state.pickle'
+2017-02-13 20:57:56,392 luigi.server    INFO     Scheduler instance shutting down
+2017-02-13 20:57:56,392 luigi.scheduler WARNING  Failed saving scheduler state
+Traceback (most recent call last):
+  File "/Users/hiroyuki/.pyenv/versions/anaconda2-4.1.1/lib/python2.7/site-packages/luigi/scheduler.py", line 434, in dump
+    with open(self._state_path, 'wb') as fobj:
+IOError: [Errno 2] No such file or directory: '/var/lib/luigi-server/state.pickle'
+2017-02-13 20:57:57,734 luigi.scheduler INFO     No prior state file exists at /var/lib/luigi-server/state.pickle. Starting with empty state
+2017-02-13 20:57:57,738 luigi.server    INFO     Scheduler starting up
+2017-02-13 20:58:57,743 luigi.scheduler INFO     Starting pruning of task graph
+2017-02-13 20:58:57,743 luigi.scheduler INFO     Done pruning task graph
+2017-02-13 20:59:10,658 luigi.server    INFO     Scheduler instance shutting down
+2017-02-13 20:59:10,658 luigi.scheduler WARNING  Failed saving scheduler state
+Traceback (most recent call last):
+  File "/Users/hiroyuki/.pyenv/versions/anaconda2-4.1.1/lib/python2.7/site-packages/luigi/scheduler.py", line 434, in dump
+    with open(self._state_path, 'wb') as fobj:
+IOError: [Errno 2] No such file or directory: '/var/lib/luigi-server/state.pickle'
+2017-02-13 20:59:10,658 luigi.server    INFO     Scheduler instance shutting down
+2017-02-13 20:59:10,659 luigi.scheduler WARNING  Failed saving scheduler state
+Traceback (most recent call last):
+  File "/Users/hiroyuki/.pyenv/versions/anaconda2-4.1.1/lib/python2.7/site-packages/luigi/scheduler.py", line 434, in dump
+    with open(self._state_path, 'wb') as fobj:
+IOError: [Errno 2] No such file or directory: '/var/lib/luigi-server/state.pickle'
+2017-02-13 20:59:11,818 luigi.scheduler INFO     No prior state file exists at /var/lib/luigi-server/state.pickle. Starting with empty state
+2017-02-13 20:59:11,822 luigi.server    INFO     Scheduler starting up
+2017-02-13 21:00:11,826 luigi.scheduler INFO     Starting pruning of task graph
+2017-02-13 21:00:11,827 luigi.scheduler INFO     Done pruning task graph
