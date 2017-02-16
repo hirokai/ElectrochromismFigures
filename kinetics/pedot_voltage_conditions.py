@@ -5,15 +5,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.optimize import curve_fit
 
-from common.luigi_tools import cleanup
 from common.data_tools import *
+from common.luigi_tools import cleanup
 from common.util import *
+from figure_tools import colors10
 
-#
-# Parameters for curve fitting
-#
-
-# Time for splitting traces
 split_t = {
     '01': [2, 62, 122, 182, 242, 302],
     '02': [2, 62, 122, 182, 242, 302, 422, 482, 542, 602, 662],

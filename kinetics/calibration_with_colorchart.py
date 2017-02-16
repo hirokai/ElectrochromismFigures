@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import optimize
 
-from common.data_tools import colors10
+from figure_tools import colors10
 from common.util import ensure_folder_exists, sort_with_order, chdir_root, ensure_exists, bcolors
 
 
@@ -69,11 +69,11 @@ def calibration(colorcharts):
     return np.array(calibrated), ks
 
 
-def calc_calibration_factor(name, folder):
-    base_folder = os.path.join('data', 'kinetics', 'correction', name)
+def calc_calibration_factor(name, mode='kinetics'):
+    base_folder = os.path.join('data', mode, 'correction', name)
     ensure_exists(base_folder)
     os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
-    files = glob.glob(os.path.join('data', 'kinetics', 'colorchart', name, '*.csv'))
+    files = glob.glob(os.path.join('data', mode, 'colorchart', name, '*.csv'))
     print('%d files.' % len(files))
     lsss = read_l_values(files)
     # for lss in lsss:

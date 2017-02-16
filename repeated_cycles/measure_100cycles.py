@@ -3,7 +3,7 @@ import csv
 import luigi
 from common.util import chdir_root, basename_noext
 from common.data_tools import load_csv, mk_dict
-from kinetics.measure_kinetics import RawLValuesOfSingleMovie
+from kinetics.measure_kinetics import RawLValuesOfSingleMovie, CorrectedLValuesOfAllMovies
 import shutil
 
 
@@ -22,25 +22,19 @@ class Measure100Cycles(luigi.Task):
     final = luigi.Parameter()  # Late cycles
 
     def requires(self):
-        dat = mk_dict(load_csv(os.path.join('parameters', self.date, 'sample rois.csv'))[1:])
-        roi_initial = get_roi(dat, self.initial)
-        roi_final = get_roi(dat, self.final)
-        return [
-            RawLValuesOfSingleMovie(name=self.name, path=os.path.join(self.folder, self.initial), roi=roi_initial,
-                                    mode='100cycles'),
-            RawLValuesOfSingleMovie(name=self.name, path=os.path.join(self.folder, self.final), roi=roi_final,
-                                    mode='100cycles')
-        ]
+        return CorrectedLValuesOfAllMovies(name=self.date, folder=self.folder, mode='100cycles')
 
     def run(self):
-        shutil.copy(self.input()[0].path, self.output()[0].path)
-        shutil.copy(self.input()[1].path, self.output()[1].path)
+        shutil.copy(os.path.join('data', '100cycles', 'corrected', self.date, basename_noext(self.initial) + '.csv'),
+                    self.output()['initial'].path)
+        shutil.copy(os.path.join('data', '100cycles', 'corrected', self.date, basename_noext(self.final) + '.csv'),
+                    self.output()['final'].path)
 
     def output(self):
-        return [
-            luigi.LocalTarget(os.path.join('data', '100cycles', 'corrected', '%s_initial.csv' % self.name)),
-            luigi.LocalTarget(os.path.join('data', '100cycles', 'corrected', '%s_final.csv' % self.name))
-        ]
+        return {
+            'initial': luigi.LocalTarget(os.path.join('data', '100cycles', 'corrected', '%s_initial.csv' % self.name)),
+            'final': luigi.LocalTarget(os.path.join('data', '100cycles', 'corrected', '%s_final.csv' % self.name))
+        }
 
 
 class MeasureAll100Cycles(luigi.WrapperTask):
@@ -48,13 +42,14 @@ class MeasureAll100Cycles(luigi.WrapperTask):
         with open(os.path.join('parameters', 'dataset', '100cycles.csv'), 'rU') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                yield Measure100Cycles(name=row['name'], date=row['date'], folder=row['folder'],
-                                       initial=row['initial'], final=row['final'])
+                if row['name'].find('#') != 0:
+                    yield Measure100Cycles(name=row['name'], date=row['date'], folder=row['folder'],
+                                           initial=row['initial'], final=row['final'])
 
 
 def main():
     chdir_root()
-    luigi.run(['MeasureAll100Cycles'])
+    luigi.run(['MeasureAll100Cycles', '--workers', '4'])
 
 
 if __name__ == "__main__":

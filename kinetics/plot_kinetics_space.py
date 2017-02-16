@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MultipleLocator
 
-from src.data_tools import ambiguous_path, colors10
-from src.luigi_tools import cleanup
-from src.measure_cie_space import CollectCIESpace
-from src.figure_tools import plot_and_save, set_common_format
+from common.data_tools import ambiguous_path
+from common.luigi_tools import cleanup
+from kinetics.measure_cie_space import CollectCIESpace
+from common.figure_tools import plot_and_save, set_common_format, colors10
 
 
 def normalize(vs, idx):

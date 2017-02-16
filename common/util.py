@@ -1,5 +1,6 @@
 import os
 import itertools
+import numpy as np
 
 
 def flatten(vs):
@@ -31,7 +32,6 @@ def by_indices(xs, idxs):
 
 # Permutation of list
 def sort_with_order(vs, order):
-    import numpy as np
     r = np.zeros(len(order))
     for i, o in enumerate(order):
         r[i] = vs[o]

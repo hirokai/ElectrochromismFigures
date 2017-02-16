@@ -6,7 +6,8 @@ import seaborn as sns
 from matplotlib.ticker import MultipleLocator
 from scipy.optimize import curve_fit
 
-from common.data_tools import colors10, load_csv
+from common.data_tools import load_csv
+from figure_tools import colors10
 from common.data_tools import split_trace
 from common.luigi_tools import cleanup
 from common.pedot_voltage_conditions import CollectCIELabStub

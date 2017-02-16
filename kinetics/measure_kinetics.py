@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 
-from common.data_tools import colors10, load_csv, save_csv, get_movie_list
+from common.data_tools import load_csv, save_csv, get_movie_list
+from figure_tools import colors10
 from common.util import ensure_exists, ensure_folder_exists, basename_noext, bcolors, chdir_root, grouper, flatten
 from common.make_slices import mk_slices
 from common.image_tools import get_cie_l_rois
@@ -186,11 +187,16 @@ class RawLValuesOfAllMovies(luigi.Task):
     def requires(self):
         assert self.mode == '100cycles' or self.mode == 'kinetics'
 
-        names = get_movie_list(self.name)
-        movie_files = [os.path.join(self.folder, n) for n in names]
+        movie_files = get_movie_list(self.name)
         # print(movie_files)
         roi_path = os.path.join('parameters', self.name, 'sample rois.csv')
-        rois = read_rois(roi_path)
+        print('RawLValuesOfAllMovies().requires() roi_path = : %s' % roi_path)
+
+        # FIXME: Need to support both
+        rois = read_rois_simple(roi_path)
+        # rois = read_rois(roi_path)
+
+        print(rois)
 
         def mk(f):
             n = os.path.basename(f)[4:8]
@@ -207,7 +213,7 @@ class RawLValuesOfAllMovies(luigi.Task):
                 print('ROI not found: %s, %s, %s' % (n, f, ' '.join(rois.keys())))
                 return ''
 
-        return [RawLValuesOfSingleMovie(name=self.name, path=f, roi=mk(f), mode=self.mode)
+        return [RawLValuesOfSingleMovie(name=self.name, path=os.path.join(self.folder,f), roi=mk(f), mode=self.mode)
                 for f in movie_files]
 
     def output(self):
@@ -239,30 +245,32 @@ def correct_cielab(in_csvs, correction_csvs, out_csvs):
 class CalcCorrectionValues(luigi.Task):
     name = luigi.Parameter()
     folder = luigi.Parameter()
+    mode = luigi.Parameter()
 
     def requires(self):
-        return MeasureLValuesOfColorCharts(name=self.name, folder=self.folder)
+        return MeasureLValuesOfColorCharts(name=self.name, folder=self.folder, mode=self.mode)
 
     def output(self):
         return [luigi.LocalTarget(t.path.replace('colorchart', 'correction')) for t in self.input()]
 
     def run(self):
-        calc_calibration_factor(self.name, self.folder)
+        calc_calibration_factor(self.name, mode=self.mode)
 
 
 class CorrectedLValuesOfAllMovies(luigi.Task):
     name = luigi.Parameter()
     folder = luigi.Parameter()
+    mode = luigi.Parameter()
 
     def requires(self):
-        return [RawLValuesOfAllMovies(name=self.name, folder=self.folder, mode='kinetics'),
-                CalcCorrectionValues(name=self.name, folder=self.folder)
+        return [RawLValuesOfAllMovies(name=self.name, folder=self.folder, mode=self.mode),
+                CalcCorrectionValues(name=self.name, folder=self.folder, mode=self.mode)
                 ]
 
     def output(self):
         names = get_movie_list(self.name)
         return [luigi.LocalTarget(
-            os.path.join('data', 'kinetics', 'corrected', self.name, basename_noext(n) + '.csv')) for n
+            os.path.join('data', self.mode, 'corrected', self.name, basename_noext(n) + '.csv')) for n
                 in names]
 
     def run(self):
@@ -279,7 +287,7 @@ class SplitAllTraces(luigi.Task):
     folder = luigi.Parameter()
 
     def requires(self):
-        return CorrectedLValuesOfAllMovies(name=self.name, folder=self.folder)
+        return CorrectedLValuesOfAllMovies(name=self.name, folder=self.folder, mode='kinetics')
 
     def run(self):
         movie_conditions_csv = os.path.join('parameters', self.name, 'movie_conditions.csv')
@@ -512,7 +520,8 @@ class TestKineticsAll(unittest.TestCase):
     def test_CorrectedLValuesOfAllMovies(self):
         # shutil.rmtree('data/kinetics/corrected', ignore_errors=True)
         r = luigi.run(['CorrectedLValuesOfAllMovies', '--name', '20161013', '--folder',
-                       '/Volumes/ExtWork/Suda Electrochromism/20161013/', '--workers', '4', '--no-lock'])
+                       '/Volumes/ExtWork/Suda Electrochromism/20161013/', '--mode', 'kinetics', '--workers', '4',
+                       '--no-lock'])
         self.assertTrue(r)
 
     def test_SplitAllTraces(self):

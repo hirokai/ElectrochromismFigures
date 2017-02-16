@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.optimize import curve_fit
 
-from luigi_tools import cleanup
 from common.data_tools import *
+from figure_tools import colors10
+from luigi_tools import cleanup
 
 #
 # Parameters for curve fitting

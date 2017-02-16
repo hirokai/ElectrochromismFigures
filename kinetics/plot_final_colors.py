@@ -8,7 +8,7 @@ from matplotlib.ticker import MultipleLocator
 from scipy.optimize import curve_fit
 
 from common.util import chdir_root
-from common.data_tools import colors10
+from figure_tools import colors10
 from common.luigi_tools import cleanup
 from pedot_voltage_conditions import CurveFitStub
 from common.figure_tools import plot_and_save, set_common_format

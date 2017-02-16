@@ -1,6 +1,7 @@
 import os
 
 import numpy as np
+
 from util import ensure_exists
 
 
@@ -96,18 +97,3 @@ def get_movie_list(name):
     dat = np.array(load_csv(os.path.join('parameters', name, 'movie_conditions.csv')))
     return list(dat[1:, 0])
 
-
-#
-# Plotting
-#
-
-colors10 = """#1f77b4
-#ff7f0e
-#2ca02c
-#d62728
-#9467bd
-#8c564b
-#e377c2
-#7f7f7f
-#bcbd22
-#17becf""".split('\n')
