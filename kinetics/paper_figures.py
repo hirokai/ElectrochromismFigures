@@ -3,11 +3,27 @@ import numpy as np
 
 from common.data_tools import load_csv
 from figure_tools import colors10
-from common.util import chdir_root,ensure_folder_exists
+from common.util import chdir_root, ensure_folder_exists
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 import seaborn as sns
+
+
+def first_order(t0, k, a_i, a_f, t):
+    y = a_i + (a_f - a_i) * (1 - np.exp(-k * (t - t0)))
+    return y
+
+
+def plot_fitting_curve(voltage, t_offset, color=colors10[0]):
+    in_path = os.path.join('data', 'kinetics', 'fitted_manual', '20160512-13', '20 perc PEDOT - 2000 rpm',
+                           'ox %s.csv' % voltage)
+    t0, kinv, li, lf = map(float, load_csv(in_path)[0])
+
+    ts = np.array(range(60))
+    ys = [first_order(t0, 1.0 / kinv, li, lf, t + t_offset) for t in ts]
+
+    plt.plot(ts, ys, c=color)
 
 
 def main():
@@ -22,8 +38,10 @@ def main():
             numpy=True)
         xs = np.array(range(vs.shape[0]))[4:]
         ys = vs[:, 1][4:]
-        xs -= xs[0]
-        plt.scatter(xs, ys, c=colors10[i], edgecolor='none',s=15)
+        t_offset = xs[0]
+        xs -= t_offset
+        plt.scatter(xs, ys, c=colors10[i], edgecolor='none', s=15)
+        plot_fitting_curve(voltage, t_offset, color=colors10[i])
 
     plt.xlim([0, 40])
     plt.ylim([30, 50])
@@ -42,7 +60,7 @@ def main():
     plt.xlabel('Time [sec]')
     plt.ylabel('L* value')
 
-    outpath = os.path.join('kinetics','dist','kinetics_voltages.pdf')
+    outpath = os.path.join('kinetics', 'dist', 'kinetics_voltages.pdf')
     ensure_folder_exists(outpath)
     plt.savefig(outpath)
     plt.show()
