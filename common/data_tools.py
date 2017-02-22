@@ -12,7 +12,7 @@ from util import ensure_exists
 def ambiguous_path(path_head):
     import glob
     files = glob.glob(path_head)
-    assert len(files) == 1, 'Only one file must be found (%d files found).' % len(files)
+    assert len(files) == 1, 'Exactly one file must be found (%d files found).' % len(files)
     return files[0]
 
 

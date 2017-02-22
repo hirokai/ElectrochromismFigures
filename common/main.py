@@ -11,6 +11,7 @@ from plot_kinetics_old import PlotOxTrace, PlotRateConstants
 from plot_kinetics_space import PlotCIESpace
 from plot_uvvis_lab_timecourse import PlotUVVisTimeCIELab
 
+# FIXME: This is likely to be broken as of Feb, 2017.
 
 class AllFigures(luigi.WrapperTask):
     def requires(self):

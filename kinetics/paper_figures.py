@@ -26,9 +26,49 @@ def plot_fitting_curve(voltage, t_offset, color=colors10[0]):
     plt.plot(ts, ys, c=color)
 
 
-def main():
-    chdir_root()
+def plot_stretched_kinetics():
+    sns.set_style('ticks')
+    sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
+
     plt.figure(figsize=(6, 4))
+
+    in_path = os.path.join('data', 'stretched', 'corrected', '20161028', 'MVI_7962.csv')
+    vs = load_csv(in_path, numpy=True)
+    ts = np.array(range(len(vs)))
+
+    ts -= 63
+
+    ts = ts[63:364]
+    vs = vs[63:364]
+
+    ax = plt.axes()
+    major_locator = MultipleLocator(60)
+    minor_locator = MultipleLocator(10)
+    ax.xaxis.set_major_locator(major_locator)
+    ax.xaxis.set_minor_locator(minor_locator)
+
+    major_locator = MultipleLocator(10)
+    minor_locator = MultipleLocator(2)
+    ax.yaxis.set_major_locator(major_locator)
+    ax.yaxis.set_minor_locator(minor_locator)
+
+    plt.xlim([0, 300])
+    plt.ylim([30, 60])
+
+    plt.xlabel('Time [sec]')
+    plt.ylabel('L* value')
+
+    plt.plot(ts, vs, c=colors10[0])
+
+    out_path = os.path.join('kinetics', 'dist', 'L-t curve stretched.pdf')
+    ensure_folder_exists(out_path)
+    plt.savefig(out_path)
+    plt.show()
+
+
+def plot_kinetics_voltage_dependence(outpath=None,ax=None):
+    if outpath is not None:
+        plt.figure(figsize=(6, 4))
 
     sns.set_style('ticks')
     sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
@@ -45,7 +85,9 @@ def main():
 
     plt.xlim([0, 40])
     plt.ylim([30, 50])
-    ax = plt.axes()
+
+    if ax is None:
+        ax = plt.axes()
 
     major_locator = MultipleLocator(10)
     minor_locator = MultipleLocator(2)
@@ -60,10 +102,16 @@ def main():
     plt.xlabel('Time [sec]')
     plt.ylabel('L* value')
 
-    outpath = os.path.join('kinetics', 'dist', 'kinetics_voltages.pdf')
-    ensure_folder_exists(outpath)
-    plt.savefig(outpath)
-    plt.show()
+    if outpath is not None:
+        ensure_folder_exists(outpath)
+        plt.savefig(outpath)
+        plt.show()
+
+
+def main():
+    chdir_root()
+    plot_stretched_kinetics()
+    plot_kinetics_voltage_dependence(outpath=os.path.join('kinetics', 'dist', 'kinetics_voltages.pdf'))
 
 
 if __name__ == "__main__":

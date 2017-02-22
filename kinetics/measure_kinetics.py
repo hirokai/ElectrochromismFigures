@@ -24,6 +24,8 @@ from split import read_sample_conditions, read_all_split_traces
 from calibration_with_colorchart import calc_calibration_factor
 
 
+cieMeasurementModeList = ['kinetics','100cycles','stretched']
+
 #
 # Handling movies, conditions, ROIs
 #
@@ -158,7 +160,7 @@ class RawLValuesOfSingleMovie(luigi.Task):
         return MakeSingleMovieSlices(path=self.path)
 
     def run(self):
-        assert self.mode == '100cycles' or self.mode == 'kinetics'
+        assert self.mode in cieMeasurementModeList
         print('%s' % self.path)
         folder_path = os.path.join(os.path.dirname(self.path), 'slices', basename_noext(self.path))
         assert isinstance(self.roi, str) and str(self.roi).count(',') >= 3, 'roi must be string'
@@ -179,13 +181,15 @@ class RawLValuesOfSingleMovie(luigi.Task):
                                               self.name, "%s.csv" % basename_noext(self.path)))
 
 
+# Use movie list file for listing movie files.
+# Do not necessarily process all the movies in the folder.
 class RawLValuesOfAllMovies(luigi.Task):
     name = luigi.Parameter()
     folder = luigi.Parameter()
     mode = luigi.Parameter()
 
     def requires(self):
-        assert self.mode == '100cycles' or self.mode == 'kinetics'
+        assert self.mode in cieMeasurementModeList
 
         movie_files = get_movie_list(self.name)
         # print(movie_files)
@@ -213,7 +217,7 @@ class RawLValuesOfAllMovies(luigi.Task):
                 print('ROI not found: %s, %s, %s' % (n, f, ' '.join(rois.keys())))
                 return ''
 
-        return [RawLValuesOfSingleMovie(name=self.name, path=os.path.join(self.folder,f), roi=mk(f), mode=self.mode)
+        return [RawLValuesOfSingleMovie(name=self.name, path=os.path.join(self.folder, f), roi=mk(f), mode=self.mode)
                 for f in movie_files]
 
     def output(self):

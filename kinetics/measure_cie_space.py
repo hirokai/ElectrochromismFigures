@@ -4,8 +4,8 @@ import luigi
 import numpy as np
 from skimage import io, color
 
-from src.make_slices import MakeSlicesStub
-from src.data_tools import save_csv
+from common.make_slices import MakeSlicesStub
+from common.data_tools import save_csv
 
 
 def run_set(slices_folder, rois):
@@ -34,12 +34,6 @@ def run_set(slices_folder, rois):
 
 class CollectCIESpace(luigi.Task):
     movie_name = luigi.Parameter()
-
-    with open('./data/CollectCIESpace_rois.txt', 'r') as content_file:
-        rois_str = content_file.read()
-
-    rois = map(lambda l: map(int, l.split('\t')), rois_str.split('\n'))
-
     base_folder = '/Users/hiroyuki/Downloads'
 
     def requires(self):
@@ -49,7 +43,10 @@ class CollectCIESpace(luigi.Task):
         return [luigi.LocalTarget('../data/cielab_space/%s.csv' % self.movie_name)]
 
     def run(self):
-        run_set(self.input().path, self.rois)
+        with open('./data/CollectCIESpace_rois.txt', 'r') as content_file:
+            rois_str = content_file.read()
+        rois = map(lambda l: map(int, l.split('\t')), rois_str.split('\n'))
+        run_set(self.input().path, rois)
 
 
 if __name__ == "__main__":

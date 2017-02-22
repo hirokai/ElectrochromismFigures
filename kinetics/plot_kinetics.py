@@ -9,6 +9,7 @@ import numpy as np
 from kinetics import Kinetics, KineticsDataType, read_kinetics
 from figure_tools import colors10
 from common.util import chdir_root, ensure_folder_exists
+from matplotlib.ticker import MultipleLocator
 
 
 def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], label=None, show=False):
@@ -38,6 +39,7 @@ def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], lab
     ks = sorted(d.keys())
     vs = [np.mean(d[k] or []) for k in ks]
     l = [(zip([k] * 100, d[k]) or []) for k in ks if d[k] is not None]
+    xlabels = {'voltage': 'Voltage [V]', 'pedot': 'PEDOT ratio [wt%]', 'rpm': 'Spin coating speed [rpm]'}
     if l:
         kv_all = reduce(lambda a, b: a + b, l)
         k_all = [a[0] for a in kv_all]
@@ -47,10 +49,52 @@ def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], lab
         plt.errorbar(ks, vs, es, c=color, label=label)
         # plt.scatter(k_all, v_all, c=color)
         plt.title('%d perc PEDOT, %d rpm, %s, %.1f V' % (pedot or -1, rpm or -1, mode or '--', voltage or -1))
-        plt.xlabel(variable)
+        plt.xlabel(xlabels.get(variable) or variable)
         plt.ylabel('Rate constant [sec^-1]')
         if show:
             plt.show()
+
+
+# if outpath is None, the graph is for paper figures (using subplots).
+def plot_final_colors(dates, outpath=None, ax=None):
+    dat = read_kinetics(KineticsDataType.FinalL, dates=dates)
+    if outpath is not None:
+        plt.figure(figsize=(6, 4))
+        ax = plt.axes()
+    for i, pedot in enumerate([20, 40, 60, 80]):
+        plot_series(dat, 'voltage', pedot, 2000, None, None, color=colors10[i], label='%d perc PEDOT' % pedot)
+    plt.title('Varied PEDOT and voltage, ox, 2000 rpm')
+    plt.ylabel('Final L value')
+
+    major_locator = MultipleLocator(0.4)
+    minor_locator = MultipleLocator(0.2)
+    ax.xaxis.set_major_locator(major_locator)
+    ax.xaxis.set_minor_locator(minor_locator)
+
+    plt.legend(loc='lower right')
+
+    if outpath is not None:
+        ensure_folder_exists(outpath)
+        plt.savefig(outpath)
+        plt.show()
+
+
+# if outpath is None, the graph is for paper figures (using subplots).
+def plot_rate_constants(outpath=None):
+    dat = read_kinetics(KineticsDataType.RateConstant, dates=None)
+    if outpath is not None:
+        plt.figure(figsize=(6, 4))
+    for i, voltage in enumerate([0.2, 0.4, 0.6, 0.8]):
+        plot_series(dat, 'pedot', None, 2000, 'ox', voltage, color=colors10[i], label='%.1f V' % voltage)
+    plt.title('Varied PEDOT and voltage, ox, 2000 rpm')
+    plt.xlim([0, 100])
+    plt.ylim([0, 1.2])
+    if outpath is not None:
+        plt.legend()
+    if outpath is not None:
+        ensure_folder_exists(outpath)
+        plt.savefig(outpath)
+        plt.show()
 
 
 def main():
@@ -76,32 +120,9 @@ def main():
     plt.savefig(outpath)
     plt.show()
 
-    dat = read_kinetics(KineticsDataType.RateConstant, dates=None)
-    plt.figure(figsize=(6, 4))
-    for i, voltage in enumerate([0.2, 0.4, 0.6, 0.8]):
-        plot_series(dat, 'pedot', None, 2000, 'ox', voltage, color=colors10[i], label='%.1f V' % voltage)
-    plt.title('Varied PEDOT and voltage, ox, 2000 rpm')
-    plt.xlim([0, 100])
-    plt.ylim([0, 1.2])
-    plt.legend()
-    outpath = os.path.join('kinetics', 'dist', '20170214 rate pedot voltage.pdf')
-    ensure_folder_exists(outpath)
-    plt.savefig(outpath)
-    plt.show()
+    plot_rate_constants(outpath=os.path.join('kinetics', 'dist', '20170214 rate pedot voltage.pdf'))
 
-    dat = read_kinetics(KineticsDataType.FinalL, dates=dates)
-    print(dat)
-    plt.figure(figsize=(6, 4))
-    for i, pedot in enumerate([20, 40, 60, 80]):
-        plot_series(dat, 'voltage', pedot, 2000, None, None, color=colors10[i], label='%d perc PEDOT' % pedot)
-    plt.title('Varied PEDOT and voltage, ox, 2000 rpm')
-    plt.ylabel('Final L value')
-
-    plt.legend(loc='lower right')
-    outpath = os.path.join('kinetics', 'dist', '20170214 final l values.pdf')
-    ensure_folder_exists(outpath)
-    plt.savefig(outpath)
-    plt.show()
+    plot_final_colors(dates=dates, outpath=os.path.join('kinetics', 'dist', '20170214 final l values.pdf'))
 
 
 if __name__ == "__main__":
