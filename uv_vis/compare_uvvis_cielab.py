@@ -9,10 +9,12 @@ import luigi
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from common.util import chdir_root
 from common.image_tools import get_cie_rois
-
+from common.luigi_tools import cleanup
 from kinetics.measure_colorchart import read_csv, measure_color_chart
-from kinetics.test_calibration import calc_calibration_scales
+from exploring.test_calibration import calc_calibration_scales
+from matplotlib.ticker import MultipleLocator
 
 
 # Get absorbance at `wl` nm wavelength from .txt data file.
@@ -131,6 +133,86 @@ def my_savefig(out_path):
     plt.savefig(out_path)
 
 
+def plot_absorbance_l_correlation(input=None, output=None, paper_style=False):
+    colors = ['blue', 'red']
+    css = []
+    for i, n in enumerate(['new']):
+        cs = np.genfromtxt(input[n]['calibration'].path, delimiter=',')[1:, 1:]
+        css.append(cs)
+    css = np.concatenate(css)
+
+    plt.figure(figsize=(10, 4))
+    rs = []
+    for i, n in enumerate(['new', 'old']):
+        rs.append(plot_all(css, input[n]['sample'].path,
+                           input[n]['calibration'].path,
+                           input[n]['abs'].path,
+                           color=colors[i]))
+    rs = np.concatenate(rs, axis=1)
+
+    my_savefig(output['compare'].path)
+    plt.clf()
+
+    if paper_style:
+        sns.set_style('ticks')
+        sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
+    plt.figure(figsize=(4, 2.8))
+    ax = plt.axes()
+    plt.scatter(rs[0, :], rs[1, :])
+    from scipy import stats
+    rs2 = []
+    for i in range(rs.shape[1]):
+        if rs[0, i] < 0.6:
+            rs2.append(rs[:, i])
+    rs2 = np.array(rs2).transpose()
+    slope, intercept, r_value, p_value, std_err = stats.linregress(rs2[0, :], rs2[1, :])
+    xs = np.linspace(0, 0.6, 10)
+    ys = slope * xs + intercept
+    plt.plot(xs, ys, lw=1)
+    plt.xlim([0, 0.8])
+    plt.ylim([0, 50])
+    if paper_style:
+        major_locator = MultipleLocator(0.2)
+        minor_locator = MultipleLocator(0.1)
+        ax.xaxis.set_major_locator(major_locator)
+        ax.xaxis.set_minor_locator(minor_locator)
+
+    my_savefig(output['corrected'].path)
+    print(slope, intercept, np.power(r_value, 2), std_err)
+
+
+def plot_absorbance_l_correlation_simple():
+    colors = ['blue', 'red']
+    css = []
+    for i, n in enumerate(['new']):
+        cs = np.genfromtxt(input[n]['calibration'].path, delimiter=',')[1:, 1:]
+        css.append(cs)
+    css = np.concatenate(css)
+
+    plt.figure(figsize=(10, 4))
+    rs = []
+    for i, n in enumerate(['new', 'old']):
+        rs.append(plot_all(css, input[n]['sample'].path,
+                           input[n]['calibration'].path,
+                           input[n]['abs'].path,
+                           color=colors[i]))
+    rs = np.concatenate(rs, axis=1)
+    plt.clf()
+
+    from scipy import stats
+    rs2 = []
+    for i in range(rs.shape[1]):
+        if rs[0, i] < 0.6:
+            rs2.append(rs[:, i])
+    rs2 = np.array(rs2).transpose()
+    slope, intercept, r_value, p_value, std_err = stats.linregress(rs2[0, :], rs2[1, :])
+    xs = np.linspace(0, 0.6, 10)
+    ys = slope * xs + intercept
+    plt.plot(xs, ys, lw=1)
+    plt.xlim([0, 0.8])
+    plt.ylim([0, 50])
+
+
 class PlotColorCharts(luigi.Task):
     def requires(self):
         return {
@@ -138,47 +220,13 @@ class PlotColorCharts(luigi.Task):
             'old': MeasureColorCharts(name='20160523')}
 
     def run(self):
-        colors = ['blue', 'red']
-        css = []
-        for i, n in enumerate(['new']):
-            cs = np.genfromtxt(self.input()[n]['calibration'].path, delimiter=',')[1:, 1:]
-            css.append(cs)
-        css = np.concatenate(css)
-
-        plt.figure(figsize=(10, 4))
-        rs = []
-        for i, n in enumerate(['new', 'old']):
-            rs.append(plot_all(css, self.input()[n]['sample'].path,
-                               self.input()[n]['calibration'].path,
-                               self.input()[n]['abs'].path,
-                               color=colors[i]))
-        rs = np.concatenate(rs, axis=1)
-
-        my_savefig(self.output()['final'].path)
-        plt.show()
-
-        plt.figure(figsize=(4,4))
-        plt.scatter(rs[0, :], rs[1, :])
-        from scipy import stats
-        rs2 = []
-        for i in range(rs.shape[1]):
-            if rs[0, i] < 0.6:
-                rs2.append(rs[:, i])
-        rs2 = np.array(rs2).transpose()
-        slope, intercept, r_value, p_value, std_err = stats.linregress(rs2[0, :], rs2[1, :])
-        xs = np.linspace(0, 0.6, 10)
-        ys = slope * xs + intercept
-        plt.plot(xs, ys, lw=1)
-        plt.xlim([0, 0.8])
-        plt.ylim([0, 50])
-        my_savefig(self.output()['correction'].path)
-        print(slope, intercept, np.power(r_value, 2), std_err)
-
-        plt.show()
+        plot_absorbance_l_correlation(input=self.input(), output=self.output(), paper_style=True)
 
     def output(self):
-        return {'correction': luigi.LocalTarget('dist/lab-uvvis/l vs abs correction.pdf'),
-                'final': luigi.LocalTarget('dist/lab-uvvis/l vs abs.pdf')}
+        return {
+            'corrected': luigi.LocalTarget('dist/lab-uvvis/l vs abs corrected.pdf'),
+            'compare': luigi.LocalTarget('dist/lab-uvvis/l vs abs before and after calibration.pdf')
+        }
 
 
 class MeasureColorCharts(luigi.Task):
@@ -202,9 +250,9 @@ class MeasureColorCharts(luigi.Task):
 
 
 def main():
-    os.chdir(os.path.join(os.path.dirname(__file__), os.pardir))
+    chdir_root()
     # cleanup(MeasureColorCharts(name='20160523'))
-    # cleanup(PlotColorCharts())
+    cleanup(PlotColorCharts())
     luigi.run(['PlotColorCharts'])
 
 

@@ -38,14 +38,16 @@ def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], lab
             d = {v: dat.get_data(pedot, rpm, 'ox', v) or dat.get_data(pedot, rpm, 'red', v) for v in vs}
     ks = sorted(d.keys())
     vs = [np.mean(d[k] or []) for k in ks]
+    values = {k: d[k] or [] for k in ks}
     l = [(zip([k] * 100, d[k]) or []) for k in ks if d[k] is not None]
     xlabels = {'voltage': 'Voltage [V]', 'pedot': 'PEDOT ratio [wt%]', 'rpm': 'Spin coating speed [rpm]'}
     if l:
         kv_all = reduce(lambda a, b: a + b, l)
         k_all = [a[0] for a in kv_all]
         v_all = [a[1] for a in kv_all]
-        print(kv_all)
+        # print(kv_all)
         es = [np.std(d[k] or []) for k in ks]
+        print('kinetics.plot_series(): voltage', voltage, zip(ks,vs,es),values)
         plt.errorbar(ks, vs, es, c=color, label=label)
         # plt.scatter(k_all, v_all, c=color)
         plt.title('%d perc PEDOT, %d rpm, %s, %.1f V' % (pedot or -1, rpm or -1, mode or '--', voltage or -1))

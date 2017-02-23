@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from src.data_tools import colors10
-from src.figure_tools import plot_and_save, set_common_format
+from common.util import chdir_root
+from common.figure_tools import colors10, plot_and_save, set_common_format
 
 
 def plot_thickness_pedot():
-    with open('../data/plot_thickness_pedot.txt', 'r') as content_file:
+    with open('./data/plot_thickness_pedot.txt', 'r') as content_file:
         dat_str = content_file.read()
 
     dat = np.array(map(lambda l: map(float, l.split('\t')), dat_str.split('\n')))
@@ -26,7 +26,7 @@ def plot_thickness_pedot():
 
 
 def plot_thickness_rpm():
-    with open('../data/plot_thickness_rpm.txt', 'r') as content_file:
+    with open('./data/plot_thickness_rpm.txt', 'r') as content_file:
         dat_str = content_file.read()
 
     dat = np.array(map(lambda l: map(float, l.split('\t')), dat_str.split('\n')))
@@ -44,7 +44,7 @@ def plot_thickness_rpm():
 
 def read_thickness():
     print('read_thickness()')
-    df = pd.read_csv('../data/thickness_2016_10.csv')
+    df = pd.read_csv('./data/thickness_2016_10.csv')
     df2 = pd.DataFrame()
     df2['pedot'] = df['pedot content [wt%]']
     df2['rpm'] = df['Spin coating speed [rpm]']
@@ -55,21 +55,46 @@ def read_thickness():
     print(df2.groupby(['pedot', 'rpm']).mean())
 
 
-def plot_thickness_pedot_multi():
-    with open('../data/thickness_2016_10.csv', 'r') as content_file:
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
+def read_thickness_simple(mode):
+    with open('./data/thickness_2016_10.csv', 'r') as content_file:
         reader = csv.reader(content_file)
         reader.next()
-        vs = np.array([map(float, [r[0], r[1], r[2], r[9], r[10]]) for r in reader])
+        vs = []
+        for r in reader:
+            if is_number(r[10]):
+                vs.append(map(float, [r[0], r[1], r[2], r[9], r[10]]))
+        vs = np.array(vs)
 
     dat = {}
-    for i in range(30):
-        rpm = str(int(vs[i, 2]))
-        if rpm not in dat:
-            dat[rpm] = []
-        dat[rpm].append([vs[i, 1], vs[i, 3], vs[i, 4]])
-    for k, v in dat.iteritems():
-        dat[k] = np.array(dat[k])
-    print(dat)
+    if mode == 'pedot':
+        for i in range(30):
+            rpm = str(int(vs[i, 2]))
+            if rpm not in dat:
+                dat[rpm] = []
+            dat[rpm].append([vs[i, 1], vs[i, 3], vs[i, 4]])
+        for k, v in dat.iteritems():
+            dat[k] = np.array(dat[k])
+    else:   # mode == 'rpm'
+        for i in range(30):
+            pedot = str(int(vs[i, 1]))
+            if pedot not in dat:
+                dat[pedot] = []
+            dat[pedot].append([vs[i, 2], vs[i, 3], vs[i, 4]])
+        for k, v in dat.iteritems():
+            dat[k] = np.array(dat[k])
+    return dat
+
+
+def plot_thickness_pedot_multi():
+    dat = read_thickness_simple(mode='pedot')
 
     plt.figure(figsize=(4.5, 3))
     ls = []
@@ -88,24 +113,10 @@ def plot_thickness_pedot_multi():
     plt.show()
 
 
-def plot_thickness_rpm_multi():
-    with open('../data/thickness_2016_10.csv', 'r') as content_file:
-        reader = csv.reader(content_file)
-        reader.next()
-        vs = np.array([map(float, [r[0], r[1], r[2], r[9], r[10]]) for r in reader])
-
-    dat = {}
-    for i in range(30):
-        pedot = str(int(vs[i, 1]))
-        print(pedot)
-        if pedot not in dat:
-            dat[pedot] = []
-        dat[pedot].append([vs[i, 2], vs[i, 3], vs[i, 4]])
-    for k, v in dat.iteritems():
-        dat[k] = np.array(dat[k])
-    print(dat)
-
-    plt.figure(figsize=(4.5, 3))
+def plot_thickness_rpm_multi(ax=None):
+    dat = read_thickness_simple(mode='rpm')
+    if ax is None:
+        plt.figure(figsize=(4.5, 3))
     ls = []
     for i, p in enumerate([20, 30, 40, 60, 80]):
         xs = dat[str(p)][:, 0]
@@ -119,7 +130,8 @@ def plot_thickness_rpm_multi():
     plt.ylabel('Film thickness [um]')
     plt.legend(handles=ls)
     plt.axis([0, 6000, 0, 8])
-    plt.show()
+    if ax is None:
+        plt.show()
 
 
 class PlotThickness(luigi.Task):
@@ -130,8 +142,8 @@ class PlotThickness(luigi.Task):
         return []
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig ' + self.name1 + '.pdf'),
-                luigi.LocalTarget('../dist/Fig ' + self.name2 + '.pdf')]
+        return [luigi.LocalTarget('./dist/Fig ' + self.name1 + '.pdf'),
+                luigi.LocalTarget('./dist/Fig ' + self.name2 + '.pdf')]
 
     def run(self):
         set_common_format()
@@ -140,11 +152,9 @@ class PlotThickness(luigi.Task):
 
 
 if __name__ == "__main__":
-    import os
-
-    os.chdir(os.path.dirname(__file__))
-    # plot_thickness_pedot_multi()
-    # plot_thickness_rpm_multi()
+    chdir_root()
+    plot_thickness_pedot_multi()
+    plot_thickness_rpm_multi()
     read_thickness()
-# cleanup(PlotThickness(name1='S1', name2='S2'))
-# luigi.run(['PlotThickness', '--name1', 'S1', '--name2', 'S2'])
+    # cleanup(PlotThickness(name1='S1', name2='S2'))
+    # luigi.run(['PlotThickness', '--name1', 'S1', '--name2', 'S2'])

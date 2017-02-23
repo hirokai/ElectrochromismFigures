@@ -8,6 +8,7 @@ from matplotlib.ticker import MultipleLocator
 from scipy import stats
 
 from figure_tools import colors10
+from common.util import chdir_root
 from common.luigi_tools import cleanup
 from common.figure_tools import plot_and_save, set_format, set_common_format
 
@@ -40,15 +41,17 @@ def plot_uvvis():
     set_format(ax, [400, 500, 600, 700, 800], [0, 0.2, 0.4, 0.6, 0.8], 2, 2)
 
 
-def plot_correlation():
+# Old data.
+def plot_absorbance_l_correlation(ax=None):
     # Data of redox cycles on 5/23.
-    with open('../data/plot_correlation.txt', 'r') as content_file:
+    with open('./data/plot_correlation.txt', 'r') as content_file:
         calibration_str = content_file.read()
 
     calibration = np.array(map(lambda s: map(float, s.split('\t')), calibration_str.split('\n')[1:]))
 
-    fig = plt.figure(figsize=(4.5, 3))
-    ax = fig.add_subplot(111)
+    if ax is None:
+        fig = plt.figure(figsize=(4.5, 3))
+        ax = fig.add_subplot(111)
     plt.scatter(calibration[:, 0], calibration[:, 1], lw=0, s=25)
     plt.xlabel('Absorbance at 570 nm')
     plt.ylabel('Mean L* value')
@@ -72,7 +75,7 @@ def plot_correlation():
 
 def plot_timecourse():
     # Data of one redox cycle with 20 sec interval on 5/23.
-    with open('../data/plot_timecourse.txt', 'r') as content_file:
+    with open('./data/plot_timecourse.txt', 'r') as content_file:
         time_course_str = content_file.read()
 
     time_course = np.array(map(lambda s: map(float, s.split('\t')), time_course_str.split('\n')[1:]))
@@ -112,18 +115,18 @@ class PlotUVVisTimeCIELab(luigi.Task):
         return []
 
     def output(self):
-        return [luigi.LocalTarget('../dist/Fig ' + self.name1 + '.pdf'),
-                luigi.LocalTarget('../dist/Fig ' + self.name2 + '.pdf'),
-                luigi.LocalTarget('../dist/Fig ' + self.name3 + '.pdf')]
+        return [luigi.LocalTarget('./dist/Fig ' + self.name1 + '.pdf'),
+                luigi.LocalTarget('./dist/Fig ' + self.name2 + '.pdf'),
+                luigi.LocalTarget('./dist/Fig ' + self.name3 + '.pdf')]
 
     def run(self):
         set_common_format()
         plot_and_save(plot_uvvis, self.name1)
         plot_and_save(plot_timecourse, self.name2)
-        plot_and_save(plot_correlation, self.name3)
+        plot_and_save(plot_absorbance_l_correlation, self.name3)
 
 
 if __name__ == "__main__":
-    os.chdir(os.path.dirname(__file__))
+    chdir_root()
     cleanup(PlotUVVisTimeCIELab(name1='2a', name2='3a', name3='3b'))
     luigi.run(['PlotUVVisTimeCIELab', '--name1', '2b', '--name2', '3a', '--name3', '3b'])
