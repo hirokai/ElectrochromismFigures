@@ -1,0 +1,5 @@
+file,mode,samples
+MCi1.MOV,100cycles,1
+MCi2.MOV,100cycles,1
+MVI_8020.MOV,100cycles,2
+MVI_8021.MOV,100cycles,2

@@ -50,7 +50,7 @@ def read_kinetics(typ,dates):
     elif typ == KineticsDataType.RawSplitTraces:
         dat = read_split_traces('raw_split', dates)
     elif typ == KineticsDataType.RateConstant:
-        dat = read_rate_constant(dates)
+        dat = read_rate_constant(dates,alldata=True)
     elif typ == KineticsDataType.FinalL:
         dat = read_final_l(dates)
     else:
@@ -110,7 +110,7 @@ def read_final_l(dates=None):
     return dat
 
 
-def read_rate_constant(dates=None):
+def read_rate_constant(dates=None,alldata=False):
     dat = Kinetics()
 
     if dates is None:
@@ -127,5 +127,16 @@ def read_rate_constant(dates=None):
                             t0, kinv, li, lf = map(float, f.read().strip().split(','))
                             k = 1.0 / kinv
                             dat.append_data(pedot, rpm, 'ox', voltage, k)
+            if alldata:
+                for voltage in [-0.5,-0.2,0]:
+                    for date in dates:
+                        path = os.path.join('data', 'kinetics', 'fitted_manual', date,
+                                            '%d perc PEDOT - %d rpm' % (pedot, rpm), 'red %.1f.csv' % voltage)
+                        if os.path.exists(path):
+                            with open(path) as f:
+                                t0, kinv, li, lf = map(float, f.read().strip().split(','))
+                                k = 1.0 / kinv
+                                dat.append_data(pedot, rpm, 'red', voltage, k)
+
     assert isinstance(dat, Kinetics)
     return dat

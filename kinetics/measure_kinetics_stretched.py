@@ -34,6 +34,17 @@ def main():
              '--no-lock'])
 
 
+def split_traces():
+    folders = {
+        '20161028': os.path.join('/Volumes', 'ExtWork', 'Suda Electrochromism', '20161028')
+    }
+    for n, f in folders.iteritems():
+        cleanup(CorrectedLValuesOfAllMovies(name=n, folder=f, mode='stretched'))
+        luigi.run(
+            ['CorrectedLValuesOfAllMovies', '--name', n, '--folder', f, '--mode', 'stretched', '--workers', '4',
+             '--no-lock'])
+
+
 if __name__ == "__main__":
     chdir_root()
     main()
