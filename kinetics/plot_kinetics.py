@@ -6,7 +6,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-from kinetics import Kinetics, KineticsDataType, read_kinetics
+from kinetics import Kinetics, KineticsDataType, read_kinetics, read_final_l_predefined_dates
 from figure_tools import colors10
 from common.util import chdir_root, ensure_folder_exists
 from matplotlib.ticker import MultipleLocator
@@ -36,6 +36,7 @@ def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], lab
             d = {v: dat.get_data(pedot, rpm, mode, v) for v in vs}
         else:
             d = {v: dat.get_data(pedot, rpm, 'ox', v) or dat.get_data(pedot, rpm, 'red', v) for v in vs}
+            # d = {v: dat.get_data(pedot, rpm, 'ox' if v > 0 else 'red', v) for v in vs}
     ks = sorted(d.keys())
     vs = [np.mean(d[k] or []) for k in ks]
     values = {k: d[k] or [] for k in ks}
@@ -60,6 +61,30 @@ def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], lab
 # if outpath is None, the graph is for paper figures (using subplots).
 def plot_final_colors(dates, outpath=None, ax=None):
     dat = read_kinetics(KineticsDataType.FinalL, dates=dates)
+    if outpath is not None:
+        plt.figure(figsize=(6, 4))
+        ax = plt.axes()
+    for i, pedot in enumerate([20, 40, 60, 80]):
+        plot_series(dat, 'voltage', pedot, 2000, None, None, color=colors10[i], label='%d perc PEDOT' % pedot)
+    plt.title('Varied PEDOT and voltage, ox, 2000 rpm')
+    plt.ylabel('Final L value')
+
+    major_locator = MultipleLocator(0.4)
+    minor_locator = MultipleLocator(0.2)
+    ax.xaxis.set_major_locator(major_locator)
+    ax.xaxis.set_minor_locator(minor_locator)
+
+    plt.legend(loc='lower right')
+
+    if outpath is not None:
+        ensure_folder_exists(outpath)
+        plt.savefig(outpath)
+        plt.show()
+
+
+# if outpath is None, the graph is for paper figures (using subplots).
+def plot_final_colors_predefined_dates(outpath=None, ax=None):
+    dat = read_final_l_predefined_dates()
     if outpath is not None:
         plt.figure(figsize=(6, 4))
         ax = plt.axes()

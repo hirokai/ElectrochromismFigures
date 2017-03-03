@@ -44,13 +44,16 @@ class KineticsDataType:
 
 
 # Todo: Stub
-def read_kinetics(typ,dates):
+def read_kinetics(typ, dates):
     if typ == KineticsDataType.SplitTraces:
         dat = read_split_traces('split', dates)
     elif typ == KineticsDataType.RawSplitTraces:
         dat = read_split_traces('raw_split', dates)
     elif typ == KineticsDataType.RateConstant:
-        dat = read_rate_constant(dates,alldata=True)
+        if dates == 'predefined':
+            dat = read_rate_constant(dates, alldata=True)
+        else:
+            dat = read_rate_constant(dates, alldata=True)
     elif typ == KineticsDataType.FinalL:
         dat = read_final_l(dates)
     else:
@@ -86,6 +89,23 @@ def read_split_traces(typ, dates=None):
     return dat
 
 
+def read_kinetics_predefined_dates(typ):
+    dat = read_kinetics(typ, dates=['20160512-13', '20161019'])
+    dat2 = read_kinetics(typ, dates=['20160512-13', '20161013'])
+    voltages = [-0.5, -0.2, 0, 0.2, 0.4, 0.6, 0.8]
+    for voltage in voltages:
+        rpm = 2000
+        for mode in ['ox','red']:
+            d = dat2.get_data(20, rpm, mode, voltage)
+            if d:
+                dat.set_data(20, rpm, mode, voltage, d)
+    return dat
+
+
+def read_final_l_predefined_dates():
+    return read_kinetics_predefined_dates(KineticsDataType.FinalL)
+
+
 def read_final_l(dates=None):
     dat = Kinetics()
 
@@ -110,7 +130,7 @@ def read_final_l(dates=None):
     return dat
 
 
-def read_rate_constant(dates=None,alldata=False):
+def read_rate_constant(dates=None, alldata=False):
     dat = Kinetics()
 
     if dates is None:
@@ -128,7 +148,7 @@ def read_rate_constant(dates=None,alldata=False):
                             k = 1.0 / kinv
                             dat.append_data(pedot, rpm, 'ox', voltage, k)
             if alldata:
-                for voltage in [-0.5,-0.2,0]:
+                for voltage in [-0.5, -0.2, 0]:
                     for date in dates:
                         path = os.path.join('data', 'kinetics', 'fitted_manual', date,
                                             '%d perc PEDOT - %d rpm' % (pedot, rpm), 'red %.1f.csv' % voltage)

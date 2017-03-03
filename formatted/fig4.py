@@ -4,7 +4,7 @@ import seaborn as sns
 
 from common.util import chdir_root, ensure_folder_exists
 from kinetics.paper_figures import plot_kinetics_voltage_dependence
-from kinetics.plot_kinetics import plot_final_colors, plot_rate_constants
+from kinetics.plot_kinetics import plot_final_colors, plot_final_colors_predefined_dates, plot_rate_constants
 from kinetics.plot_kinetics_space import plot_cie_space
 
 
@@ -19,7 +19,7 @@ def main():
     plot_kinetics_voltage_dependence(outpath=None, ax=ax)
 
     ax = plt.subplot(2, 2, 2)
-    plot_final_colors(dates=['20160512-13', '20161019'],ax=ax)
+    plot_final_colors_predefined_dates(ax=ax)
 
     ax = plt.subplot(2, 2, 3)
     plot_rate_constants()
