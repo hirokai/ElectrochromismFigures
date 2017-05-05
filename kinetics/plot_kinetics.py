@@ -97,6 +97,10 @@ def plot_final_colors_predefined_dates(outpath=None, ax=None):
     minor_locator = MultipleLocator(0.2)
     ax.xaxis.set_major_locator(major_locator)
     ax.xaxis.set_minor_locator(minor_locator)
+    major_locator = MultipleLocator(10)
+    minor_locator = MultipleLocator(5)
+    ax.yaxis.set_major_locator(major_locator)
+    ax.yaxis.set_minor_locator(minor_locator)
 
     plt.legend(loc='lower right')
 

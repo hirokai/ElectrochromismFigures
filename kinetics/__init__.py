@@ -50,10 +50,7 @@ def read_kinetics(typ, dates):
     elif typ == KineticsDataType.RawSplitTraces:
         dat = read_split_traces('raw_split', dates)
     elif typ == KineticsDataType.RateConstant:
-        if dates == 'predefined':
-            dat = read_rate_constant(dates, alldata=True)
-        else:
-            dat = read_rate_constant(dates, alldata=True)
+        dat = read_rate_constant(dates, alldata=True)
     elif typ == KineticsDataType.FinalL:
         dat = read_final_l(dates)
     else:
