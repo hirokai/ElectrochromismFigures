@@ -34,7 +34,7 @@ def save_csv(path, rows):
             writer.writerow(map(str, row))
 
 
-def load_csv(path, skip_rows=0, numpy=False):
+def load_csv(path, skip_rows=0, numpy=False, universal_new_line=False):
     import csv
 
     def may_float(s):
@@ -43,8 +43,16 @@ def load_csv(path, skip_rows=0, numpy=False):
         except ValueError:
             return s
 
-    with open(path) as f:
-        reader = csv.reader(f)
+    f = None
+    try:
+        if universal_new_line:
+            f = open(path,"rU")
+        else:
+            f = open(path)
+        if universal_new_line:
+            reader = csv.reader(f)
+        else:
+            reader = csv.reader(f)
         for _ in range(skip_rows):
             reader.next()
         r = [row for row in reader]
@@ -52,6 +60,11 @@ def load_csv(path, skip_rows=0, numpy=False):
             return np.array(r).astype(np.float)
         else:
             return r
+    except Exception as e:
+        print e
+        if f is not None:
+            f.close()
+        return None
 
 
 def mk_dict(rows):

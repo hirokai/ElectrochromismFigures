@@ -4,18 +4,16 @@ import seaborn as sns
 import shutil
 
 from common.util import chdir_root, ensure_folder_exists
-from kinetics.plot_kinetics import plot_rate_constants_reduction
+from film_thickness.plot_thickness import plot_thickness_rpm_multi
 
 
 def main():
+    raise "Stub!"
     chdir_root()
     sns.set_style('ticks')
     sns.set_style({"xtick.direction": "in", "ytick.direction": "in"})
-    plt.rcParams['lines.linewidth'] = 1
-    plt.figure(figsize=(4.5, 3))
-    ax = plt.axes()
-    plot_rate_constants_reduction()
-    outpath = os.path.join('formatted', 'dist', 'Fig S7.pdf')
+    plt.figure(figsize=(6, 4.5))
+    outpath = os.path.join('formatted', 'dist', 'Fig S5.pdf')
     ensure_folder_exists(outpath)
     plt.savefig(outpath)
 

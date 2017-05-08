@@ -15,7 +15,7 @@ def main():
     plt.figure(figsize=(4.5, 3))
     ax = plt.axes()
     plot_rate_vs_thickness(outpath=None)
-    outpath = os.path.join('formatted', 'dist', 'Fig S8.pdf')
+    outpath = os.path.join('formatted', 'dist', 'Fig S11.pdf')
     ensure_folder_exists(outpath)
     plt.savefig(outpath)
 
