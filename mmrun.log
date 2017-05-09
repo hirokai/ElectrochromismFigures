@@ -50,3 +50,27 @@ IOError: [Errno 2] No such file or directory: '/var/lib/luigi-server/state.pickl
 2017-02-13 20:59:11,822 luigi.server    INFO     Scheduler starting up
 2017-02-13 21:00:11,826 luigi.scheduler INFO     Starting pruning of task graph
 2017-02-13 21:00:11,827 luigi.scheduler INFO     Done pruning task graph
+2017-05-08 16:50:19,572 luigi.scheduler INFO     No prior state file exists at /var/lib/luigi-server/state.pickle. Starting with empty state
+2017-05-08 16:50:19,581 luigi.server    INFO     Scheduler starting up
+2017-05-08 16:51:19,583 luigi.scheduler INFO     Starting pruning of task graph
+2017-05-08 16:51:19,583 luigi.scheduler INFO     Done pruning task graph
+2017-05-08 16:52:19,581 luigi.scheduler INFO     Starting pruning of task graph
+2017-05-08 16:52:19,582 luigi.scheduler INFO     Done pruning task graph
+2017-05-08 16:53:19,583 luigi.scheduler INFO     Starting pruning of task graph
+2017-05-08 16:53:19,585 luigi.scheduler INFO     Done pruning task graph
+2017-05-08 16:54:19,586 luigi.scheduler INFO     Starting pruning of task graph
+2017-05-08 16:54:19,587 luigi.scheduler INFO     Done pruning task graph
+2017-05-08 16:55:19,582 luigi.scheduler INFO     Starting pruning of task graph
+2017-05-08 16:55:19,583 luigi.scheduler INFO     Done pruning task graph
+2017-05-08 16:56:19,586 luigi.scheduler INFO     Starting pruning of task graph
+2017-05-08 16:56:19,588 luigi.scheduler INFO     Done pruning task graph
+2017-05-08 16:57:19,586 luigi.scheduler INFO     Starting pruning of task graph
+2017-05-08 16:57:19,592 luigi.scheduler INFO     Done pruning task graph
+2017-05-08 16:58:19,587 luigi.scheduler INFO     Starting pruning of task graph
+2017-05-08 16:58:19,595 luigi.scheduler INFO     Done pruning task graph
+2017-05-08 16:59:19,582 luigi.scheduler INFO     Starting pruning of task graph
+2017-05-08 16:59:19,588 luigi.scheduler INFO     Done pruning task graph
+2017-05-08 17:00:19,583 luigi.scheduler INFO     Starting pruning of task graph
+2017-05-08 17:00:19,587 luigi.scheduler INFO     Done pruning task graph
+2017-05-08 17:01:19,582 luigi.scheduler INFO     Starting pruning of task graph
+2017-05-08 17:01:19,590 luigi.scheduler INFO     Done pruning task graph

@@ -3,6 +3,7 @@
 #
 
 import os
+import csv
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -12,7 +13,53 @@ from common.util import chdir_root, ensure_folder_exists
 from matplotlib.ticker import MultipleLocator
 
 
-def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], label=None, show=False):
+def l_to_abs(l):
+    # L = -80.828597 * (Abs) + 56.321919
+    return (l - 56.321919) / (-80.828597)
+
+
+def abs_to_l(a):
+    # L = -80.828597 * (Abs) + 56.321919
+    return -80.828597 * a + 56.321919
+
+
+# Normalize L for [point] um-thick film.
+def normalize_l(l, thickness, point=1):
+    # thickness: in um
+    # L: L* value (0-100)
+    a = l_to_abs(l)
+    a2 = a / thickness * point
+    l2 = abs_to_l(a2)
+    print("normalize_l(): %.1f -> %.3f -> %.3f -> %.1f" % (l, a, a2, l2))
+    return l2
+
+
+thickness_table = None
+
+
+def load_thickness_table():
+    global thickness_table
+    thickness_table = {}
+    with open(os.path.join("data", "thickness_summary.csv"), "rb") as f:
+        reader = csv.reader(f)
+        reader.next()
+        for row in reader:
+            pedot = int(row[0])
+            rpm = int(float(row[1]))
+            if pedot not in thickness_table:
+                thickness_table[pedot] = {}
+            thickness_table[pedot][rpm] = float(row[2])
+    print(thickness_table)
+
+
+def get_thickness(pedot, rpm):
+    global thickness_table
+    if thickness_table is None:
+        load_thickness_table()
+    return thickness_table[pedot][rpm]
+
+
+def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], label=None, show=False, normalize=False):
     assert isinstance(dat, Kinetics)
     if variable == 'pedot':
         ps = [20, 30, 40, 60, 80]
@@ -37,6 +84,8 @@ def plot_series(dat, variable, pedot, rpm, mode, voltage, color=colors10[0], lab
         else:
             d = {v: dat.get_data(pedot, rpm, 'ox', v) or dat.get_data(pedot, rpm, 'red', v) for v in vs}
             # d = {v: dat.get_data(pedot, rpm, 'ox' if v > 0 else 'red', v) for v in vs}
+    if normalize:
+        d = {k: map(lambda l2: normalize_l(l2, get_thickness(pedot, rpm), point=0.5), v) for k, v in d.items()}
     ks = sorted(d.keys())
     vs = [np.mean(d[k] or []) for k in ks]
     values = {k: d[k] or [] for k in ks}
@@ -83,13 +132,14 @@ def plot_final_colors(dates, outpath=None, ax=None):
 
 
 # if outpath is None, the graph is for paper figures (using subplots).
-def plot_final_colors_predefined_dates(outpath=None, ax=None):
+def plot_final_colors_predefined_dates(outpath=None, ax=None, normalize=False):
     dat = read_final_l_predefined_dates()
     if outpath is not None:
         plt.figure(figsize=(6, 4))
         ax = plt.axes()
     for i, pedot in enumerate([20, 40, 60, 80]):
-        plot_series(dat, 'voltage', pedot, 2000, None, None, color=colors10[i], label='%d perc PEDOT' % pedot)
+        plot_series(dat, 'voltage', pedot, 2000, None, None, color=colors10[i], label='%d perc PEDOT' % pedot,
+                    normalize=normalize)
     plt.title('Varied PEDOT and voltage, ox, 2000 rpm')
     plt.ylabel('Final L value')
 

@@ -178,7 +178,8 @@ def plot_absorbance_l_correlation(input=None, output=None, paper_style=False):
         ax.xaxis.set_minor_locator(minor_locator)
 
     my_savefig(output['corrected'].path)
-    print(slope, intercept, np.power(r_value, 2), std_err)
+    print("plot_absorbance_l_correlation() result:", slope, intercept, np.power(r_value, 2), std_err)
+    print("y = %f x + %f" % (slope, intercept))
 
 
 def plot_absorbance_l_correlation_simple():

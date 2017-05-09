@@ -1,5 +1,5 @@
 import csv
-
+import os
 import luigi
 import matplotlib.pyplot as plt
 import numpy as np
@@ -82,7 +82,7 @@ def read_thickness_simple(mode):
             dat[rpm].append([vs[i, 1], vs[i, 3], vs[i, 4]])
         for k, v in dat.iteritems():
             dat[k] = np.array(dat[k])
-    else:   # mode == 'rpm'
+    else:  # mode == 'rpm'
         for i in range(30):
             pedot = str(int(vs[i, 1]))
             if pedot not in dat:
@@ -118,14 +118,17 @@ def plot_thickness_rpm_multi(ax=None):
     if ax is None:
         plt.figure(figsize=(4.5, 3))
     ls = []
-    for i, p in enumerate([20, 30, 40, 60, 80]):
-        xs = dat[str(p)][:, 0]
-        ys = dat[str(p)][:, 1] / 1000
-        es = dat[str(p)][:, 2] / 1000
-        color = colors10[i]
-        (_, caps, _) = plt.errorbar(xs, ys, es, lw=1, elinewidth=1, c=color)
-        l, = plt.plot(xs, ys, lw=1, c=color, label=str(p) + " wt%")
-        ls.append(l)
+    with open(os.path.join("data", "thickness_summary.csv"), "w") as f:
+        f.write("PEDOT,rpm,thickness,stdev\n")
+        for i, p in enumerate([20, 30, 40, 60, 80]):
+            xs = dat[str(p)][:, 0]
+            ys = dat[str(p)][:, 1] / 1000
+            es = dat[str(p)][:, 2] / 1000
+            color = colors10[i]
+            f.write("\n".join(map(lambda row: ("%d," % p) + ",".join(map(str, row)), zip(xs, ys, es))))
+            (_, caps, _) = plt.errorbar(xs, ys, es, lw=1, elinewidth=1, c=color)
+            l, = plt.plot(xs, ys, lw=1, c=color, label=str(p) + " wt%")
+            ls.append(l)
     plt.xlabel('Spin coating speed [rpm]')
     plt.ylabel('Film thickness [um]')
     plt.legend(handles=ls)

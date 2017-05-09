@@ -19,7 +19,10 @@ def main():
     plot_kinetics_voltage_dependence(outpath=None, ax=ax)
 
     ax = plt.subplot(2, 2, 2)
-    plot_final_colors_predefined_dates(ax=ax)
+    plot_final_colors_predefined_dates(ax=ax,normalize=True)
+    plt.ylabel("L* value normalized to 0.5 um thickness")
+    plt.ylim([10,60])
+    ax.legend_.remove()
 
     ax = plt.subplot(2, 2, 3)
     plot_rate_constants()
@@ -32,6 +35,13 @@ def main():
     outpath = os.path.join('formatted', 'dist', 'Fig 4.pdf')
     ensure_folder_exists(outpath)
     plt.savefig(outpath)
+    plt.show()
+
+    plt.figure(figsize=(6, 4.5))
+    plot_final_colors_predefined_dates(ax=ax,normalize=False)
+    outpath2 = os.path.join('formatted', 'dist', 'Fig S7.pdf')
+    ensure_folder_exists(outpath2)
+    plt.savefig(outpath2)
     plt.show()
 
 

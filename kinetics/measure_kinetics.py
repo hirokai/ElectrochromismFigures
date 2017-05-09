@@ -23,8 +23,8 @@ from measure_colorchart import MeasureLValuesOfColorCharts
 from split import read_sample_conditions, read_all_split_traces
 from calibration_with_colorchart import calc_calibration_factor
 
+cieMeasurementModeList = ['kinetics', '100cycles', 'stretched']
 
-cieMeasurementModeList = ['kinetics','100cycles','stretched']
 
 #
 # Handling movies, conditions, ROIs
@@ -87,7 +87,7 @@ class MakeAllSlices(luigi.WrapperTask):
 
     def requires(self):
         print('MakeAllSlices: %s' % self.folder)
-        movie_files = sorted(filter(os.path.isfile, [os.path.join(self.folder, n) for n in os.listdir(self.folder)]))
+        movie_files = sorted(filter(lambda path: os.path.isfile(path) and os.path.splitext(path)[1][1:].lower() in ["mov","avi"], [os.path.join(self.folder, n) for n in os.listdir(self.folder)]))
         for num, f in enumerate(movie_files):
             yield MakeSingleMovieSlices(path=f)
 
